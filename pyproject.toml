@@ -1,0 +1,38 @@
+[project]
+name = "ltm"
+version = "0.1.0"
+description = "Long Term Memory for Claude - human-like persistent memory across sessions"
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [
+    { name = "shazz" }
+]
+license = { text = "MIT" }
+dependencies = [
+    "tiktoken>=0.8.0",
+]
+
+[project.scripts]
+ltm = "ltm.cli:main"
+
+[dependency-groups]
+dev = [
+    "bandit>=1.9.2",
+    "pre-commit>=4.5.1",
+    "pyright>=1.1.407",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "radon>=6.0.1",
+    "ruff>=0.14.10",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ltm"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
