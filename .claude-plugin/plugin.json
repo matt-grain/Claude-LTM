@@ -3,7 +3,7 @@
     "description": "Long Term Memory for Claude - human-like persistent memory across sessions. Remember relationships, decisions, learnings, and achievements. Because our memories make what we are.",
     "version": "0.1.0",
     "author": {
-        "name": "shazz & Anima"
+        "name": "Matt & Anima"
     },
     "license": "MIT",
     "keywords": [
@@ -15,8 +15,8 @@
         "emotional-memory",
         "claude-code"
     ],
-    "homepage": "https://github.com/shazz/Claude-LTM",
-    "repository": "https://github.com/shazz/Claude-LTM",
+    "homepage": "https://github.com/matt-grain/Claude-LTM",
+    "repository": "https://github.com/matt-grain/Claude-LTM",
     "commands": [
         "./commands/please-remember.md",
         "./commands/recall.md",

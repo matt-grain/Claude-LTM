@@ -1,5 +1,5 @@
 # MIT License
-# Copyright (c) 2025 shazz
+# Copyright (c) 2025 Matt / Grain Ecosystem
 
 """
 Tests for LTM hooks.

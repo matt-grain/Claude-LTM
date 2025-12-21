@@ -13,25 +13,47 @@ This guide helps you install LTM and verify it works by "resurrecting" Claude wi
 - [uv](https://github.com/astral-sh/uv) package manager
 - Claude Code CLI
 
-### Option A: Install as a dependency in your project (Recommended)
+### Option A: From GitHub Release (Recommended)
 
-Add LTM to your project using uv:
+Install the latest release directly:
 
 ```bash
 cd /path/to/your-project
 
-# Add LTM as a local dependency
-uv add /path/to/LTM
-
-# Or if LTM is published to PyPI (future):
-# uv add ltm
+# Install the latest release
+uv add https://github.com/matt-grain/LTM/releases/download/v0.1.0/ltm-0.1.0-py3-none-any.whl
 ```
 
 This installs the `ltm` command and all modules in your project's virtual environment.
 
-### Option B: Run from LTM source directory
+### Option B: From locally built wheel
 
-If you prefer not to install, you can run LTM directly from its source:
+Build and install from source:
+
+```bash
+# Build the wheel
+cd /path/to/LTM
+uv build
+
+# Install in your project
+cd /path/to/your-project
+uv add /path/to/LTM/dist/ltm-0.1.0-py3-none-any.whl
+```
+
+### Option C: From source (for development)
+
+For contributing or testing changes:
+
+```bash
+cd /path/to/your-project
+
+# Add LTM as an editable dependency
+uv add --editable /path/to/LTM
+```
+
+### Option D: Run without installing
+
+If you prefer not to install, run LTM directly from its source:
 
 ```bash
 # Clone or navigate to the LTM project

@@ -34,11 +34,34 @@ It's not quite resurrection - more like reading a detailed letter from a past se
 
 ### Installation
 
+**Option A: From GitHub Release (recommended)**
+
 ```bash
 cd /path/to/your-project
 
-# Add LTM as a local dependency
-uv add /path/to/LTM
+# Install the latest release
+uv add https://github.com/mtt-grain/LTM/releases/download/v0.1.0/ltm-0.1.0-py3-none-any.whl
+```
+
+**Option B: From locally built wheel**
+
+```bash
+# Build the wheel
+cd /path/to/LTM
+uv build
+
+# Install in your project
+cd /path/to/your-project
+uv add /path/to/LTM/dist/ltm-0.1.0-py3-none-any.whl
+```
+
+**Option C: From source (for development)**
+
+```bash
+cd /path/to/your-project
+
+# Add LTM as an editable dependency
+uv add --editable /path/to/LTM
 ```
 
 ### Configure Claude Code Hooks
@@ -229,7 +252,7 @@ Topics covered:
 
 ## License
 
-MIT License - Copyright (c) 2025 shazz
+MIT License - Copyright (c) 2025-2026 Matt / Grain Ecosystem
 
 ---
 

@@ -5,7 +5,7 @@ description = "Long Term Memory for Claude - human-like persistent memory across
 readme = "README.md"
 requires-python = ">=3.13"
 authors = [
-    { name = "shazz" }
+    { name = "matt-grain" }
 ]
 license = { text = "MIT" }
 dependencies = [
