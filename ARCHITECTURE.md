@@ -288,26 +288,29 @@ Three mechanisms control memory count:
 
 ## Future Considerations
 
-### Compaction (Not Yet Implemented)
+### AI-Powered Compaction (Deferred)
 
-The `content` vs `original_content` split is ready for when compaction lands:
+Current rule-based decay is implemented and working. The `content` vs `original_content` split enables future AI compaction:
 - Background process identifies old, low-impact memories
-- Uses LLM to summarize content
+- Uses Claude API to intelligently summarize content
 - Updates `content` while preserving `original_content`
-- Signature remains valid
+- Signature remains valid (signs `original_content`)
 
-### Multi-Agent Scenarios
+**Why deferred**: API latency/cost, and rule-based approach is fast and predictable.
 
-Current design supports multiple agents:
-- Each agent has isolated memories
-- Agents can have different signing keys
-- Agent resolution based on AGENT.md or default "Anima"
+### Contradiction Detection (Deferred)
 
-### Backup & Migration
+Auto-detect when new memories contradict existing ones:
+- Decrease confidence on both memories
+- Suggest supersession
 
-- `/memory-export` creates portable JSON backup
-- `/memory-import` with `--merge` adds to existing
-- `--remap-agent` allows importing to different agent
+**Why deferred**: Requires Claude API call on every save, adds latency/cost.
+
+### Pin Critical Memories
+
+Mark certain memories as non-compactable in Claude Code's context system.
+
+**Status**: Waiting for Claude Code feature support.
 
 ---
 

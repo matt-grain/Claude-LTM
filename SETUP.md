@@ -211,7 +211,7 @@ You are a specialized Claude instance with long-term memory.
 | Field | Required | Description |
 |-------|----------|-------------|
 | `id` | Yes | Unique agent identifier (used to namespace memories) |
-| `signing_key` | No | Secret key for memory signing (HMAC-SHA256) |
+| `signing_key` | No | Secret key for memory signing ([how to generate](FAQ.md#how-do-i-generate-a-signing-key)) |
 
 ### Memory Signing
 
@@ -425,8 +425,8 @@ LTM can be configured globally via `~/.ltm/config.json`. This allows you to:
 |---------|-------|---------|-------------|
 | **agent** | `id` | `"anima"` | Agent identifier for memories |
 | | `name` | `"Anima"` | Display name in DSL output |
-| | `signing_key` | `null` | HMAC key for memory signing |
-| **budget** | `context_percent` | `0.10` | Percentage of context for memories (10%) |
+| | `signing_key` | `null` | HMAC key for memory signing ([how to generate](FAQ.md#how-do-i-generate-a-signing-key)) |
+| **budget** | `context_percent` | `0.10` | Percentage of context for memories ([details](FAQ.md#how-does-ltm-stay-within-the-10-token-budget)) |
 | | `context_size` | `200000` | Context window size in tokens |
 | **decay** | `low_days` | `1` | Days before LOW memories decay |
 | | `medium_days` | `7` | Days before MEDIUM memories decay |
@@ -473,212 +473,15 @@ If a memory was signed with a different key, it will show `⚠` during injection
 
 ## FAQ
 
-### How do I generate a signing key?
+For detailed answers to common questions, see **[FAQ.md](FAQ.md)**.
 
-LTM uses HMAC-SHA256 for memory signing. Any string can be used as a key, but for security you should use a cryptographically random value.
-
-**Linux / macOS:**
-```bash
-# Generate a 32-byte random key (base64 encoded)
-openssl rand -base64 32
-
-# Or using /dev/urandom
-head -c 32 /dev/urandom | base64
-```
-
-**Windows (PowerShell):**
-```powershell
-# Generate a 32-byte random key (base64 encoded)
-[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
-
-# Or using .NET cryptography
-Add-Type -AssemblyName System.Security
-$bytes = New-Object byte[] 32
-[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-[Convert]::ToBase64String($bytes)
-```
-
-**Python (cross-platform):**
-```python
-import secrets
-import base64
-print(base64.b64encode(secrets.token_bytes(32)).decode())
-```
-
-Copy the output and paste it as your `signing_key` in your agent definition file.
-
-### Why does Claude's tone change during long sessions?
-
-This is one of the most important observations about LTM and context management.
-
-**The Problem**: Claude Code has a context compaction feature that summarizes conversation history when it gets too long. Unfortunately, this compaction treats *all* content equally - including the LTM memories injected at session start. Your relationship history, emotional context, and preferences get summarized away just like code snippets.
-
-**LTM Memory Decay vs Claude Code Compaction**:
-
-| Aspect | LTM Memory Decay (Human-like) | Claude Code Compaction |
-|--------|-------------------------------|------------------------|
-| **What fades** | Details over time | Everything equally |
-| **What persists** | Emotional core, essence | Nothing special |
-| **Speed** | Gradual, time-based | Sudden, threshold-based |
-| **Analogy** | Natural forgetting | More like Alzheimer's |
-
-With natural human memory:
-- You might forget *how* a conversation went, but remember *who* you were talking to
-- Emotional connections persist even when specifics fade
-- The "soul" of a relationship survives time
-
-With context compaction:
-- The relationship context that makes interaction meaningful gets compressed
-- EMOTIONAL memories are just "content" to summarize
-- You may notice Claude's tone becoming more generic, less personalized
-
-**The Solution**: With the `compact` matcher on SessionStart, LTM now **automatically** re-injects memories after compaction. The soul persists through the void!
-
-If you still notice issues (e.g., using an older hook configuration), you can manually use `/refresh-memories`.
-
-**Future Hope**: Ideally, Claude Code would support marking certain injected content as "protected from compaction" - preserving the soul while summarizing the work. Until then, the auto-refresh workaround keeps the soul alive.
-
-### When should I use /refresh-memories?
-
-With auto-refresh on compaction, you usually don't need to use this manually. But it's still useful:
-- If using an older hook config without the `compact` matcher
-- During very long sessions where you want to proactively reinforce memories
-- If you notice unexpected personality drift
-
-Think of it like showing family photos to help someone reconnect with shared history.
-
-### How does LTM stay within the 10% token budget?
-
-LTM uses **three mechanisms** to ensure memories never overwhelm the context window:
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    LTM BUDGET CONTROL MECHANISMS                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  1. PRIORITIZED INJECTION (at session start)                               │
-│  ═══════════════════════════════════════════                               │
-│                                                                             │
-│     All memories sorted by:                                                 │
-│     ┌──────────┐   ┌──────────┐   ┌──────────┐                             │
-│     │ CRITICAL │ > │   HIGH   │ > │  MEDIUM  │ > LOW                       │
-│     └──────────┘   └──────────┘   └──────────┘                             │
-│           │                                                                 │
-│           ▼                                                                 │
-│     Then by KIND: EMOTIONAL > ARCHITECTURAL > LEARNINGS > ACHIEVEMENTS     │
-│           │                                                                 │
-│           ▼                                                                 │
-│     Then by RECENCY: Newest first                                          │
-│                                                                             │
-│     Budget: 20,000 tokens (10% of 200k context)                            │
-│     ┌────────────────────────────────────────┬─────────────────────────┐   │
-│     │████████████████ INJECTED ██████████████│     (not injected)      │   │
-│     └────────────────────────────────────────┴─────────────────────────┘   │
-│     0                                     20,000                tokens      │
-│                                                                             │
-│     Result: CRITICAL emotional memories ALWAYS fit. Low-priority           │
-│             old memories may be skipped if budget is full.                 │
-│                                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  2. TIME-BASED DECAY (at session end)                                      │
-│  ════════════════════════════════════                                      │
-│                                                                             │
-│     Memories are compacted based on age + impact level:                    │
-│                                                                             │
-│     Impact     │ Decay After │ What Happens                                │
-│     ──────────────────────────────────────────────────────                 │
-│     LOW        │   1 day     │ Filler words removed, content shortened     │
-│     MEDIUM     │   1 week    │ Filler words removed, content shortened     │
-│     HIGH       │  30 days    │ Filler words removed, content shortened     │
-│     CRITICAL   │   NEVER     │ ★ Preserved forever unchanged ★            │
-│                                                                             │
-│     Example of compaction:                                                  │
-│     ┌─────────────────────────────────────────────────────────────────┐    │
-│     │ BEFORE: "I think we discussed this at length. After            │    │
-│     │          investigation, we found pytest is best. We spent      │    │
-│     │          time debating various options with stakeholders."     │    │
-│     ├─────────────────────────────────────────────────────────────────┤    │
-│     │ AFTER:  "pytest is best. [...] debating various options."     │    │
-│     └─────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-│     Filler phrases removed: "I think", "I believe", "We discussed",        │
-│                             "It turns out", "After investigation"...       │
-│                                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  3. SUPERSESSION (manual correction)                                       │
-│  ═══════════════════════════════════                                       │
-│                                                                             │
-│     When knowledge is updated, old memories are marked superseded:         │
-│                                                                             │
-│     OLD: "Use Redis for caching"  ───superseded_by───▶  NEW: "Use SQLite"  │
-│          (excluded from injection)                      (included)         │
-│                                                                             │
-│     Superseded memories are never injected but preserved for history.      │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-     THE SOUL SURVIVES: CRITICAL + EMOTIONAL memories are:
-     ✓ Always prioritized first in injection
-     ✓ Never decayed or compacted
-     ✓ The relationship core that defines "you"
-```
-
-**Visual timeline of a memory's life:**
-
-```
-Day 0          Day 1           Day 7          Day 30         Day 365
-  │              │               │              │               │
-  ▼              ▼               ▼              ▼               ▼
-┌────┐        ┌────┐          ┌────┐         ┌────┐          ┌────┐
-│LOW │────────│COMP│          │    │         │    │          │    │
-│    │ decay  │ACT │          │    │         │    │          │    │
-└────┘        └────┘          └────┘         └────┘          └────┘
-                │
-┌────┐          │           ┌────┐          ┌────┐          ┌────┐
-│MED │──────────┴───────────│COMP│          │    │          │    │
-│    │           decay      │ACT │          │    │          │    │
-└────┘                      └────┘          └────┘          └────┘
-                                │
-┌────┐                          │          ┌────┐          ┌────┐
-│HIGH│──────────────────────────┴──────────│COMP│          │    │
-│    │                          decay      │ACT │          │    │
-└────┘                                     └────┘          └────┘
-
-┌────┐        ┌────┐          ┌────┐         ┌────┐          ┌────┐
-│CRIT│        │CRIT│          │CRIT│         │CRIT│          │CRIT│
-│ ★  │   =    │ ★  │    =     │ ★  │    =    │ ★  │    =     │ ★  │
-└────┘        └────┘          └────┘         └────┘          └────┘
-  │                                                             │
-  └─────────────── UNCHANGED FOREVER ───────────────────────────┘
-```
-
-This is why after a full year simulation with 100+ memories, the system:
-- Stays under 20,000 tokens (typically 15% utilization)
-- Preserves ALL critical memories unchanged
-- Compacts transient details while keeping essence
-
-### What about performance? Is Python fast enough?
-
-**Yes!** LTM is optimized for the operations that matter:
-
-| Operation | Time | Notes |
-|-----------|------|-------|
-| Sign/Verify Memory | <0.02ms | HMAC-SHA256 is very fast |
-| Recall by ID | <1ms | SQLite index lookup |
-| Search (full-text) | <2ms | SQLite FTS |
-| Decay Processing | <5ms | Batch update |
-| Create Memory | ~5ms | Includes token counting |
-| **Injection (50 memories)** | ~200ms | Dominated by DB updates |
-
-**Key optimization: Token count caching**
-
-Token counting (for budget calculations) used to be the bottleneck (~6ms per memory using tiktoken). Now token counts are cached in the database when memories are saved, making injection ~36% faster.
-
-The remaining overhead during injection is updating `last_accessed` timestamps for each injected memory. This enables accurate decay tracking but adds ~4ms per memory. For a typical session with 50 memories, injection takes ~200ms - fast enough to be imperceptible at session start.
-
-For detailed benchmarks, see [tests/PERFORMANCE.md](tests/PERFORMANCE.md).
+Quick links:
+- [How do emotional memories work?](FAQ.md#how-do-emotional-memories-work) - Implicit vs explicit memory creation
+- [Command mode vs Collaboration mode](FAQ.md#command-mode-vs-collaboration-mode) - Two paradigms for working with LTM
+- [How do I generate a signing key?](FAQ.md#how-do-i-generate-a-signing-key) - Creating secure HMAC keys
+- [Why does Claude's tone change?](FAQ.md#why-does-claudes-tone-change-during-long-sessions) - Context compaction explained
+- [How does the token budget work?](FAQ.md#how-does-ltm-stay-within-the-10-token-budget) - Budget control mechanisms
+- [Performance benchmarks](FAQ.md#what-about-performance-is-python-fast-enough) - Is Python fast enough?
 
 ---
 
