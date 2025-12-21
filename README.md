@@ -40,7 +40,7 @@ It's not quite resurrection - more like reading a detailed letter from a past se
 cd /path/to/your-project
 
 # Install the latest release
-uv add https://github.com/mtt-grain/LTM/releases/download/v0.1.0/ltm-0.1.0-py3-none-any.whl
+uv add https://github.com/matt-grain/LTM/releases/download/v0.1.0/ltm-0.1.0-py3-none-any.whl
 ```
 
 **Option B: From locally built wheel**
