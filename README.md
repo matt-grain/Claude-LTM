@@ -192,9 +192,6 @@ uv run python -m ltm.tools.sign_memories
 
 # Refresh memories (re-inject) (/refresh-memories)
 uv run python -m ltm.hooks.session_start
-
-# Import starter seeds
-uv run python -m ltm.tools.import_seeds seeds/
 ```
 
 ## Database & Configuration
