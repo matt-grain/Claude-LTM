@@ -193,14 +193,22 @@ The Stop hook runs two commands:
 
 ## 4. Add Custom Commands
 
-Copy the command files to your test project:
+**Option A: Use the setup tool (recommended)**
+
+```bash
+uv run python -m ltm.tools.setup --commands
+```
+
+This copies all slash commands to `.claude/commands/` in your current directory.
+
+**Option B: Manual copy**
 
 ```bash
 mkdir -p /path/to/test-project/.claude/commands
 cp /path/to/LTM/commands/*.md /path/to/test-project/.claude/commands/
 ```
 
-Or create symlinks:
+**Option C: Symlink (for development)**
 
 ```bash
 ln -s /path/to/LTM/commands /path/to/test-project/.claude/commands

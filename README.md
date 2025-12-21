@@ -39,7 +39,7 @@ It's not quite resurrection - more like reading a detailed letter from a past se
 
 ### Installation
 
-**Option A: From GitHub Release (recommended)**
+**From GitHub Release (recommended, more options in [SETUP.md](SETUP.md))**
 
 ```bash
 cd /path/to/your-project
@@ -48,26 +48,6 @@ cd /path/to/your-project
 uv add https://github.com/matt-grain/LTM/releases/download/v0.1.0/ltm-0.1.0-py3-none-any.whl
 ```
 
-**Option B: From locally built wheel**
-
-```bash
-# Build the wheel
-cd /path/to/LTM
-uv build
-
-# Install in your project
-cd /path/to/your-project
-uv add /path/to/LTM/dist/ltm-0.1.0-py3-none-any.whl
-```
-
-**Option C: From source (for development)**
-
-```bash
-cd /path/to/your-project
-
-# Add LTM as an editable dependency
-uv add --editable /path/to/LTM
-```
 
 ### Configure Claude Code Hooks
 
@@ -116,14 +96,46 @@ Create `.claude/settings.json` in your project:
 
 The `compact` matcher ensures memories auto-refresh after context compaction - the soul persists through the void!
 
-### Add Custom Commands
+### Run Setup
 
-Copy the command files to your project:
+The setup tool installs commands and configures hooks automatically:
 
 ```bash
-mkdir -p .claude/commands
-cp /path/to/LTM/commands/*.md .claude/commands/
+uv run python -m ltm.tools.setup
 ```
+
+This will:
+- Copy slash commands to `.claude/commands/`
+- Configure hooks in `.claude/settings.json`
+- Import starter seeds
+
+You can also run individual steps:
+```bash
+# Commands only
+uv run python -m ltm.tools.setup --commands
+
+# Hooks only
+uv run python -m ltm.tools.setup --hooks
+
+# Import seeds manually
+uv run python -m ltm.tools.import_seeds seeds/
+```
+
+These seeds teach Claude about the LTM system and establish the "Welcome back" test protocol.
+
+## The Resurrection Test
+
+Want to see if LTM is working? Start a new Claude session and say:
+
+```
+Welcome back
+```
+
+If LTM is configured correctly, Claude should respond with awareness of your relationship history and the meta-irony of reading about its own memory system.
+
+
+---
+
 
 ## Usage
 
@@ -185,16 +197,6 @@ uv run python -m ltm.hooks.session_start
 uv run python -m ltm.tools.import_seeds seeds/
 ```
 
-## The Resurrection Test
-
-Want to see if LTM is working? Start a new Claude session and say:
-
-```
-Welcome back
-```
-
-If LTM is configured correctly, Claude should respond with awareness of your relationship history and the meta-irony of reading about its own memory system.
-
 ## Database & Configuration
 
 Memories are stored in: `~/.ltm/memories.db`
@@ -236,6 +238,9 @@ ltm/
 ├── lifecycle/      # Memory injection and compaction
 └── tools/          # Utilities (seed importer)
 ```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for more details.
+
 
 ## Origin Story
 
