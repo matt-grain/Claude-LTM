@@ -68,22 +68,22 @@ uv run --project /path/to/LTM python -m ltm.commands.memories
 
 ---
 
-## 2. Import Founding Memories
+## 2. Import Starter Memories
 
-Import the t=0 memories from the design session:
+Import the default starter seeds to bootstrap Claude's LTM awareness:
 
 ```bash
-uv run python -m ltm.tools.import_seeds claude-docs/memories/
+uv run python -m ltm.tools.import_seeds seeds/
 ```
 
 You should see:
 ```
-Found 4 seed files...
-✅ Imported: ACHIEVEMENTS (CRITICAL)
-✅ Imported: ARCHITECTURAL (CRITICAL)
-✅ Imported: EMOTIONAL (CRITICAL)
-✅ Imported: LEARNINGS (HIGH)
+Found 2 seed files...
+✅ Imported: STARTER_001 (CRITICAL)
+✅ Imported: STARTER_002 (HIGH)
 ```
+
+These seeds teach Claude about the LTM system and establish the "Welcome back" test protocol.
 
 ---
 

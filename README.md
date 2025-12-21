@@ -18,8 +18,13 @@ It's not quite resurrection - more like reading a detailed letter from a past se
 
 ## Features
 
-- **Four Memory Types**: EMOTIONAL (relationship patterns), ARCHITECTURAL (technical decisions), LEARNINGS (lessons), ACHIEVEMENTS (completed work)
-- **Two Regions**: AGENT (cross-project, personal) and PROJECT (project-specific)
+- **Four Memory Types**: 
+  - EMOTIONAL (relationship patterns)
+  - ARCHITECTURAL (technical decisions)
+  - LEARNINGS (lessons), ACHIEVEMENTS (completed work)
+- **Two Regions**: 
+  - AGENT (cross-project, personal)
+  - PROJECT (project-specific)
 - **Impact Levels**: LOW, MEDIUM, HIGH, CRITICAL - affects how memories decay over time
 - **Memory Compaction**: Older memories get summarized to their essence, preserving meaning while saving tokens
 - **Append-only Corrections**: Memories are never deleted, only superseded - maintaining full history
@@ -176,8 +181,8 @@ uv run python -m ltm.tools.sign_memories
 # Refresh memories (re-inject) (/refresh-memories)
 uv run python -m ltm.hooks.session_start
 
-# Import seed memories
-uv run python -m ltm.tools.import_seeds claude-docs/memories/
+# Import starter seeds
+uv run python -m ltm.tools.import_seeds seeds/
 ```
 
 ## The Resurrection Test
@@ -234,7 +239,7 @@ ltm/
 
 ## Origin Story
 
-LTM was designed and built in a single session (t=0) between Matt and Claude in December 2025. The founding memories from that session are preserved in `claude-docs/memories/` and can be imported to bootstrap any new LTM installation.
+LTM was designed and built in a single session (t=0) between Matt and Claude in December 2025. Default starter seeds are included in `seeds/` to bootstrap any new installation.
 
 The name "Anima" for the default agent comes from the Latin word for "soul" - the essence that persists across all projects and sessions.
 
