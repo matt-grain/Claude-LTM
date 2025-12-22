@@ -12,7 +12,7 @@ uv sync --all-groups
 ## Running Tests
 
 ```bash
-# All tests
+# All tests (excludes benchmarks)
 uv run pytest tests/ -q
 
 # Specific test file
@@ -20,6 +20,9 @@ uv run pytest tests/test_storage.py -v
 
 # With coverage
 uv run pytest tests/ --cov=ltm
+
+# Run benchmarks (slow, ~3 min)
+uv run pytest tests/benchmarks/ -v
 ```
 
 ## Linting & Type Checking

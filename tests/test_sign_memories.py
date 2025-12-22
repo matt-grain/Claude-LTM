@@ -57,6 +57,11 @@ class TestSignMemoriesTool:
             "ltm.tools.sign_memories.MemoryStore", lambda: MemoryStore(db_path=db_path)
         )
 
+        # Patch Path.home() to avoid picking up global agent files
+        fake_home = tmp_path / "fake_home"
+        fake_home.mkdir()
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
         # Create agent
         agent = Agent(
             id="test-agent", name="TestAgent", signing_key="test-secret-key-123"

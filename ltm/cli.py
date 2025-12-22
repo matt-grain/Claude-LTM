@@ -17,6 +17,7 @@ def main() -> int:
         print("  recall <query>   Search memories")
         print("  forget <id>      Remove a memory")
         print("  memories         List all memories")
+        print("  keygen <agent>   Add signing key to Claude agent")
         print("  import-seeds <dir>  Import seed memories")
         return 0
 
@@ -26,18 +27,27 @@ def main() -> int:
     match command:
         case "remember":
             from ltm.commands.remember import run
+
             return run(args)
         case "recall":
             from ltm.commands.recall import run
+
             return run(args)
         case "forget":
             from ltm.commands.forget import run
+
             return run(args)
         case "memories":
             from ltm.commands.memories import run
+
+            return run(args)
+        case "keygen":
+            from ltm.tools.keygen import run
+
             return run(args)
         case "import-seeds":
             from ltm.tools.import_seeds import run
+
             return run(args)
         case _:
             print(f"Unknown command: {command}")

@@ -1,6 +1,6 @@
 [project]
 name = "ltm"
-version = "0.2.0"
+version = "0.3.0"
 description = "Long Term Memory for Claude - human-like persistent memory across sessions"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -47,3 +47,5 @@ include = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Exclude benchmarks from default test run (run with: pytest tests/benchmarks/)
+norecursedirs = ["tests/benchmarks"]

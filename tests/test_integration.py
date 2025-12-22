@@ -10,7 +10,15 @@ These tests verify the complete flow of operations across multiple components.
 from pathlib import Path
 
 
-from ltm.core import Agent, AgentResolver, Memory, MemoryKind, Project, RegionType, ImpactLevel
+from ltm.core import (
+    Agent,
+    AgentResolver,
+    Memory,
+    MemoryKind,
+    Project,
+    RegionType,
+    ImpactLevel,
+)
 from ltm.lifecycle.injection import MemoryInjector
 from ltm.storage import MemoryStore
 
@@ -24,7 +32,9 @@ class TestMemoryLifecycle:
         store = MemoryStore(db_path=temp_db_path)
 
         # Create and save agent
-        agent = Agent(id="test-agent", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="test-agent", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         # Create and save project
@@ -38,7 +48,7 @@ class TestMemoryLifecycle:
             project_id=project.id,
             kind=MemoryKind.ARCHITECTURAL,
             content="Use pytest for testing",
-            impact=ImpactLevel.HIGH
+            impact=ImpactLevel.HIGH,
         )
         store.save_memory(memory)
 
@@ -53,7 +63,9 @@ class TestMemoryLifecycle:
         """Test the complete memory supersession flow."""
         store = MemoryStore(db_path=temp_db_path)
 
-        agent = Agent(id="test-agent", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="test-agent", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         # Create original memory
@@ -61,7 +73,7 @@ class TestMemoryLifecycle:
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="Use print for debugging"
+            content="Use print for debugging",
         )
         store.save_memory(original)
 
@@ -70,7 +82,7 @@ class TestMemoryLifecycle:
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="Use logging instead of print for debugging"
+            content="Use logging instead of print for debugging",
         )
         store.save_memory(correction)
 
@@ -101,7 +113,9 @@ class TestMemoryLifecycle:
         """Test searching across different memory types."""
         store = MemoryStore(db_path=temp_db_path)
 
-        agent = Agent(id="test-agent", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="test-agent", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="Test", path=Path("/tmp/test"))
@@ -114,21 +128,21 @@ class TestMemoryLifecycle:
                 region=RegionType.PROJECT,
                 project_id=project.id,
                 kind=MemoryKind.ARCHITECTURAL,
-                content="Use pytest for unit tests"
+                content="Use pytest for unit tests",
             ),
             Memory(
                 agent_id=agent.id,
                 region=RegionType.PROJECT,
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
-                content="pytest fixtures simplify test setup"
+                content="pytest fixtures simplify test setup",
             ),
             Memory(
                 agent_id=agent.id,
                 region=RegionType.PROJECT,
                 project_id=project.id,
                 kind=MemoryKind.ACHIEVEMENTS,
-                content="Achieved 100% test coverage with pytest"
+                content="Achieved 100% test coverage with pytest",
             ),
         ]
 
@@ -143,7 +157,9 @@ class TestMemoryLifecycle:
         """Test that agent and project memories are properly separated."""
         store = MemoryStore(db_path=temp_db_path)
 
-        agent = Agent(id="test-agent", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="test-agent", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project1 = Project(id="proj-1", name="Project 1", path=Path("/tmp/p1"))
@@ -156,7 +172,7 @@ class TestMemoryLifecycle:
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.EMOTIONAL,
-            content="@User is collaborative"
+            content="@User is collaborative",
         )
         store.save_memory(agent_memory)
 
@@ -166,14 +182,14 @@ class TestMemoryLifecycle:
             region=RegionType.PROJECT,
             project_id=project1.id,
             kind=MemoryKind.ARCHITECTURAL,
-            content="Project 1 uses React"
+            content="Project 1 uses React",
         )
         p2_memory = Memory(
             agent_id=agent.id,
             region=RegionType.PROJECT,
             project_id=project2.id,
             kind=MemoryKind.ARCHITECTURAL,
-            content="Project 2 uses Vue"
+            content="Project 2 uses Vue",
         )
         store.save_memory(p1_memory)
         store.save_memory(p2_memory)
@@ -203,7 +219,9 @@ class TestMemoryInjection:
         store = MemoryStore(db_path=temp_db_path)
         injector = MemoryInjector(store)
 
-        agent = Agent(id="test-agent", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="test-agent", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="Test", path=Path("/tmp/test"))
@@ -215,7 +233,7 @@ class TestMemoryInjection:
             region=RegionType.AGENT,
             kind=MemoryKind.EMOTIONAL,
             content="@Matt collaborative style",
-            impact=ImpactLevel.CRITICAL
+            impact=ImpactLevel.CRITICAL,
         )
         store.save_memory(memory)
 
@@ -231,7 +249,9 @@ class TestMemoryInjection:
         store = MemoryStore(db_path=temp_db_path)
         injector = MemoryInjector(store)
 
-        agent = Agent(id="test-agent", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="test-agent", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="Test", path=Path("/tmp/test"))
@@ -242,14 +262,14 @@ class TestMemoryInjection:
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.EMOTIONAL,
-            content="@Matt collaborative"
+            content="@Matt collaborative",
         )
         project_mem = Memory(
             agent_id=agent.id,
             region=RegionType.PROJECT,
             project_id=project.id,
             kind=MemoryKind.ARCHITECTURAL,
-            content="Use pytest"
+            content="Use pytest",
         )
         store.save_memory(agent_mem)
         store.save_memory(project_mem)
@@ -265,8 +285,13 @@ class TestMemoryInjection:
 class TestAgentResolution:
     """Integration tests for agent resolution."""
 
-    def test_anima_fallback(self, temp_project_dir: Path) -> None:
+    def test_anima_fallback(self, temp_project_dir: Path, monkeypatch) -> None:
         """Test that agent resolution falls back to Anima."""
+        # Patch Path.home() to avoid picking up global agent files
+        fake_home = temp_project_dir / "fake_home"
+        fake_home.mkdir()
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
         resolver = AgentResolver(temp_project_dir)
         agent = resolver.resolve()
 
@@ -303,14 +328,14 @@ class TestEndToEndFlow:
                 region=RegionType.AGENT,
                 kind=MemoryKind.EMOTIONAL,
                 content="@Matt { style: collaborative-peer; likes: humor; }",
-                impact=ImpactLevel.CRITICAL
+                impact=ImpactLevel.CRITICAL,
             ),
             Memory(
                 agent_id=agent.id,
                 region=RegionType.AGENT,
                 kind=MemoryKind.EMOTIONAL,
                 content='@Matt "Welcome back" = resurrection test',
-                impact=ImpactLevel.HIGH
+                impact=ImpactLevel.HIGH,
             ),
             Memory(
                 agent_id=agent.id,
@@ -318,7 +343,7 @@ class TestEndToEndFlow:
                 project_id=project.id,
                 kind=MemoryKind.ARCHITECTURAL,
                 content="Use SQLite for storage, pytest for testing",
-                impact=ImpactLevel.HIGH
+                impact=ImpactLevel.HIGH,
             ),
         ]
 
@@ -349,7 +374,7 @@ class TestEndToEndFlow:
             region=RegionType.AGENT,
             kind=MemoryKind.ACHIEVEMENTS,
             content="Built LTM system in single session",
-            impact=ImpactLevel.HIGH
+            impact=ImpactLevel.HIGH,
         )
         store.save_memory(new_memory)
 
@@ -363,7 +388,9 @@ class TestEndToEndFlow:
 
         # Create two agents
         agent1 = Agent(id="anima", name="Anima", definition_path=None, signing_key=None)
-        agent2 = Agent(id="other-agent", name="Other", definition_path=None, signing_key=None)
+        agent2 = Agent(
+            id="other-agent", name="Other", definition_path=None, signing_key=None
+        )
         store.save_agent(agent1)
         store.save_agent(agent2)
 
@@ -375,13 +402,13 @@ class TestEndToEndFlow:
             agent_id=agent1.id,
             region=RegionType.AGENT,
             kind=MemoryKind.EMOTIONAL,
-            content="Anima's memory"
+            content="Anima's memory",
         )
         other_memory = Memory(
             agent_id=agent2.id,
             region=RegionType.AGENT,
             kind=MemoryKind.EMOTIONAL,
-            content="Other agent's memory"
+            content="Other agent's memory",
         )
         store.save_memory(anima_memory)
         store.save_memory(other_memory)

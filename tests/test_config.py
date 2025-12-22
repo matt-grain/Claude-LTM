@@ -192,6 +192,11 @@ class TestConfigIntegration:
         monkeypatch.setattr(LTMConfig, "get_config_path", lambda: config_path)
         reload_config()
 
+        # Patch Path.home() to avoid picking up global agent files
+        fake_home = tmp_path / "fake_home"
+        fake_home.mkdir()
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
         # Resolve with no agent files - should use config
         resolver = AgentResolver(project_path=tmp_path)
         agent = resolver.resolve()
