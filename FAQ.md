@@ -84,34 +84,25 @@ The key difference LTM enables: **trust can accumulate**. In stateless sessions,
 
 ### How do I generate a signing key?
 
+**Easiest way - use the keygen command:**
+
+```bash
+# Add signing key to an existing Claude agent
+ltm keygen my-agent
+```
+
+This finds the agent file (in `.claude/agents/` or `~/.claude/agents/`), generates a secure key, adds it to the frontmatter, and signs any existing unsigned memories.
+
+**Manual generation (for ~/.ltm/config.json or custom setup):**
+
 LTM uses HMAC-SHA256 for memory signing. Any string can be used as a key, but for security you should use a cryptographically random value.
 
-**Linux / macOS:**
 ```bash
-# Generate a 32-byte random key (base64 encoded)
-openssl rand -base64 32
+# Linux / macOS
+openssl rand -hex 32
 
-# Or using /dev/urandom
-head -c 32 /dev/urandom | base64
-```
-
-**Windows (PowerShell):**
-```powershell
-# Generate a 32-byte random key (base64 encoded)
-[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
-
-# Or using .NET cryptography
-Add-Type -AssemblyName System.Security
-$bytes = New-Object byte[] 32
-[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-[Convert]::ToBase64String($bytes)
-```
-
-**Python (cross-platform):**
-```python
-import secrets
-import base64
-print(base64.b64encode(secrets.token_bytes(32)).decode())
+# Python (cross-platform)
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 Copy the output and paste it as your `signing_key` in your agent definition file or `~/.ltm/config.json`.

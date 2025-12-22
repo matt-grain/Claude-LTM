@@ -399,11 +399,15 @@ uv run python -m ltm.commands.forget abc123
 Or using the CLI entry point:
 
 ```bash
-uv run ltm remember "Important architectural decision"
-uv run ltm memories
-uv run ltm recall architecture
-uv run ltm forget abc123
+ltm remember "Important architectural decision"
+ltm memories
+ltm recall architecture
+ltm forget abc123
+ltm keygen my-agent    # Add signing key to Claude agent
+ltm import-seeds seeds/
 ```
+
+> **Note:** Run with `uv run ltm` if the virtual environment is not activated.
 
 ---
 

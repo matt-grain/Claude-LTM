@@ -158,41 +158,28 @@ If LTM is configured correctly, Claude should respond with awareness of your rel
 ### Command Line
 
 ```bash
-# Save a memory (/please-remember)
-uv run python -m ltm.commands.remember "Never use print for logging"
+# Add signing key to a Claude agent
+ltm keygen my-agent
 
-# List memories (/memories)
-uv run python -m ltm.commands.memories
+# Save a memory
+ltm remember "Never use print for logging"
 
-# Search memories (/recall)
-uv run python -m ltm.commands.recall logging
-uv run python -m ltm.commands.recall --full architecture
+# List memories
+ltm memories
 
-# Forget a memory (/forget)
-uv run python -m ltm.commands.forget abc123
+# Search memories
+ltm recall logging
 
-# Show memory statistics (/memory-stats)
-uv run python -m ltm.commands.stats
+# Forget a memory
+ltm forget abc123
 
-# Visualize memory graph (/memory-graph)
-uv run python -m ltm.commands.graph --all
-
-# Export memories to JSON (/memory-export)
-uv run python -m ltm.commands.export_memories backup.json
-
-# Import memories from JSON (/memory-import)
-uv run python -m ltm.commands.import_memories backup.json --merge
-
-# Detect achievements from git commits (/detect-achievements)
-uv run python -m ltm.tools.detect_achievements --since 24
-
-# Sign unsigned memories (/sign-memories)
-uv run python -m ltm.tools.sign_memories --dry-run
-uv run python -m ltm.tools.sign_memories
-
-# Refresh memories (re-inject) (/refresh-memories)
-uv run python -m ltm.hooks.session_start
+# Import seed memories
+ltm import-seeds seeds/
 ```
+
+> **Note:** Run with `uv run ltm` if the virtual environment is not activated.
+
+For more commands, see [SETUP.md](SETUP.md#9-using-ltm-commands).
 
 ## Database & Configuration
 
