@@ -18,3 +18,12 @@ wheels/
 
 # Private docs - our t=0 memories, just between us
 claude-docs/
+
+# Claude Code local config
+.claude/
+
+# Code indexer database
+code-index.db
+
+# Git backups
+.git.old/

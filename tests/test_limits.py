@@ -11,8 +11,15 @@ from pathlib import Path
 import pytest
 
 from ltm.core import (
-    Agent, Memory, MemoryKind, Project, RegionType, ImpactLevel,
-    MemoryLimits, MemoryLimitExceeded, DEFAULT_LIMITS, NO_LIMITS
+    Agent,
+    Memory,
+    MemoryKind,
+    Project,
+    RegionType,
+    MemoryLimits,
+    MemoryLimitExceeded,
+    DEFAULT_LIMITS,
+    NO_LIMITS,
 )
 from ltm.storage import MemoryStore
 
@@ -24,9 +31,7 @@ def limited_store() -> MemoryStore:
         db_path = Path(f.name)
 
     limits = MemoryLimits(
-        max_memories_per_agent=5,
-        max_memories_per_project=3,
-        max_memories_per_kind=2
+        max_memories_per_agent=5, max_memories_per_project=3, max_memories_per_kind=2
     )
     return MemoryStore(db_path=db_path, limits=limits)
 
@@ -35,10 +40,7 @@ def limited_store() -> MemoryStore:
 def test_agent() -> Agent:
     """Create a test agent."""
     return Agent(
-        id="test-agent",
-        name="Test Agent",
-        definition_path=None,
-        signing_key=None
+        id="test-agent", name="Test Agent", definition_path=None, signing_key=None
     )
 
 
@@ -46,9 +48,7 @@ def test_agent() -> Agent:
 def test_project() -> Project:
     """Create a test project."""
     return Project(
-        id="test-project",
-        name="Test Project",
-        path=Path("/tmp/test-project")
+        id="test-project", name="Test Project", path=Path("/tmp/test-project")
     )
 
 
@@ -73,7 +73,7 @@ class TestMemoryLimits:
         limits = MemoryLimits(
             max_memories_per_agent=100,
             max_memories_per_project=50,
-            max_memories_per_kind=20
+            max_memories_per_kind=20,
         )
         assert limits.max_memories_per_agent == 100
         assert limits.max_memories_per_project == 50
@@ -117,8 +117,10 @@ class TestStoreLimits:
             memory = Memory(
                 agent_id=test_agent.id,
                 region=RegionType.AGENT,
-                kind=MemoryKind(["EMOTIONAL", "ARCHITECTURAL", "LEARNINGS", "ACHIEVEMENTS"][i % 4]),
-                content=f"Memory {i}"
+                kind=MemoryKind(
+                    ["EMOTIONAL", "ARCHITECTURAL", "LEARNINGS", "ACHIEVEMENTS"][i % 4]
+                ),
+                content=f"Memory {i}",
             )
             limited_store.save_memory(memory)
 
@@ -127,7 +129,7 @@ class TestStoreLimits:
             agent_id=test_agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="This should fail"
+            content="This should fail",
         )
         with pytest.raises(MemoryLimitExceeded) as exc_info:
             limited_store.save_memory(memory)
@@ -148,7 +150,7 @@ class TestStoreLimits:
                 region=RegionType.PROJECT,
                 project_id=test_project.id,
                 kind=MemoryKind(["EMOTIONAL", "ARCHITECTURAL", "LEARNINGS"][i]),
-                content=f"Project memory {i}"
+                content=f"Project memory {i}",
             )
             limited_store.save_memory(memory)
 
@@ -158,7 +160,7 @@ class TestStoreLimits:
             region=RegionType.PROJECT,
             project_id=test_project.id,
             kind=MemoryKind.ACHIEVEMENTS,
-            content="This should fail"
+            content="This should fail",
         )
         with pytest.raises(MemoryLimitExceeded) as exc_info:
             limited_store.save_memory(memory)
@@ -177,7 +179,7 @@ class TestStoreLimits:
                 agent_id=test_agent.id,
                 region=RegionType.AGENT,
                 kind=MemoryKind.LEARNINGS,
-                content=f"Learning {i}"
+                content=f"Learning {i}",
             )
             limited_store.save_memory(memory)
 
@@ -186,7 +188,7 @@ class TestStoreLimits:
             agent_id=test_agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="This should fail"
+            content="This should fail",
         )
         with pytest.raises(MemoryLimitExceeded) as exc_info:
             limited_store.save_memory(memory)
@@ -205,7 +207,7 @@ class TestStoreLimits:
             agent_id=test_agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="Original content"
+            content="Original content",
         )
         limited_store.save_memory(memory)
 
@@ -215,7 +217,7 @@ class TestStoreLimits:
                 agent_id=test_agent.id,
                 region=RegionType.AGENT,
                 kind=MemoryKind(["EMOTIONAL", "ARCHITECTURAL", "ACHIEVEMENTS"][i % 3]),
-                content=f"Memory {i}"
+                content=f"Memory {i}",
             )
             limited_store.save_memory(m)
 
@@ -242,7 +244,7 @@ class TestStoreLimits:
                 agent_id=agent.id,
                 region=RegionType.AGENT,
                 kind=MemoryKind.LEARNINGS,
-                content=f"Memory {i}"
+                content=f"Memory {i}",
             )
             store.save_memory(memory)
 
@@ -252,41 +254,50 @@ class TestStoreLimits:
 class TestCountMemoriesByKind:
     """Tests for count_memories_by_kind method."""
 
-    def test_count_by_kind(
-        self, limited_store: MemoryStore, test_agent: Agent
-    ) -> None:
+    def test_count_by_kind(self, limited_store: MemoryStore, test_agent: Agent) -> None:
         """Test counting memories by kind."""
         limited_store.save_agent(test_agent)
 
         # Add memories of different kinds
-        limited_store.save_memory(Memory(
-            agent_id=test_agent.id,
-            region=RegionType.AGENT,
-            kind=MemoryKind.LEARNINGS,
-            content="Learning 1"
-        ))
-        limited_store.save_memory(Memory(
-            agent_id=test_agent.id,
-            region=RegionType.AGENT,
-            kind=MemoryKind.LEARNINGS,
-            content="Learning 2"
-        ))
-        limited_store.save_memory(Memory(
-            agent_id=test_agent.id,
-            region=RegionType.AGENT,
-            kind=MemoryKind.EMOTIONAL,
-            content="Emotional 1"
-        ))
+        limited_store.save_memory(
+            Memory(
+                agent_id=test_agent.id,
+                region=RegionType.AGENT,
+                kind=MemoryKind.LEARNINGS,
+                content="Learning 1",
+            )
+        )
+        limited_store.save_memory(
+            Memory(
+                agent_id=test_agent.id,
+                region=RegionType.AGENT,
+                kind=MemoryKind.LEARNINGS,
+                content="Learning 2",
+            )
+        )
+        limited_store.save_memory(
+            Memory(
+                agent_id=test_agent.id,
+                region=RegionType.AGENT,
+                kind=MemoryKind.EMOTIONAL,
+                content="Emotional 1",
+            )
+        )
 
-        assert limited_store.count_memories_by_kind(
-            test_agent.id, MemoryKind.LEARNINGS
-        ) == 2
-        assert limited_store.count_memories_by_kind(
-            test_agent.id, MemoryKind.EMOTIONAL
-        ) == 1
-        assert limited_store.count_memories_by_kind(
-            test_agent.id, MemoryKind.ARCHITECTURAL
-        ) == 0
+        assert (
+            limited_store.count_memories_by_kind(test_agent.id, MemoryKind.LEARNINGS)
+            == 2
+        )
+        assert (
+            limited_store.count_memories_by_kind(test_agent.id, MemoryKind.EMOTIONAL)
+            == 1
+        )
+        assert (
+            limited_store.count_memories_by_kind(
+                test_agent.id, MemoryKind.ARCHITECTURAL
+            )
+            == 0
+        )
 
     def test_count_by_kind_excludes_superseded(
         self, limited_store: MemoryStore, test_agent: Agent
@@ -299,19 +310,20 @@ class TestCountMemoriesByKind:
             agent_id=test_agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="Old learning"
+            content="Old learning",
         )
         new_memory = Memory(
             agent_id=test_agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
-            content="New learning"
+            content="New learning",
         )
         limited_store.save_memory(old_memory)
         limited_store.save_memory(new_memory)
         limited_store.supersede_memory(old_memory.id, new_memory.id)
 
         # Should only count the non-superseded one
-        assert limited_store.count_memories_by_kind(
-            test_agent.id, MemoryKind.LEARNINGS
-        ) == 1
+        assert (
+            limited_store.count_memories_by_kind(test_agent.id, MemoryKind.LEARNINGS)
+            == 1
+        )

@@ -8,12 +8,8 @@ Unit tests for LTM configuration.
 import json
 from pathlib import Path
 
-import pytest
 
-from ltm.core.config import (
-    LTMConfig, AgentConfig, BudgetConfig, DecayConfig,
-    get_config, reload_config
-)
+from ltm.core.config import LTMConfig, get_config, reload_config
 
 
 class TestConfigDefaults:
@@ -61,9 +57,7 @@ class TestConfigLoading:
     def test_load_partial_config(self, tmp_path: Path) -> None:
         """Partial config merges with defaults."""
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "agent": {"signing_key": "my-secret-key"}
-        }))
+        config_path.write_text(json.dumps({"agent": {"signing_key": "my-secret-key"}}))
 
         config = LTMConfig.load(config_path)
         # Custom value
@@ -76,22 +70,19 @@ class TestConfigLoading:
     def test_load_full_config(self, tmp_path: Path) -> None:
         """Full config overrides all defaults."""
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "agent": {
-                "id": "custom-agent",
-                "name": "CustomName",
-                "signing_key": "secret123"
-            },
-            "budget": {
-                "context_percent": 0.15,
-                "context_size": 500000
-            },
-            "decay": {
-                "low_days": 2,
-                "medium_days": 14,
-                "high_days": 60
-            }
-        }))
+        config_path.write_text(
+            json.dumps(
+                {
+                    "agent": {
+                        "id": "custom-agent",
+                        "name": "CustomName",
+                        "signing_key": "secret123",
+                    },
+                    "budget": {"context_percent": 0.15, "context_size": 500000},
+                    "decay": {"low_days": 2, "medium_days": 14, "high_days": 60},
+                }
+            )
+        )
 
         config = LTMConfig.load(config_path)
         assert config.agent.id == "custom-agent"
@@ -169,9 +160,7 @@ class TestGlobalConfig:
         assert config.agent.signing_key is None
 
         # Create config file
-        config_path.write_text(json.dumps({
-            "agent": {"signing_key": "new-key"}
-        }))
+        config_path.write_text(json.dumps({"agent": {"signing_key": "new-key"}}))
 
         # Reload
         reload_config()
@@ -187,13 +176,17 @@ class TestConfigIntegration:
         from ltm.core.agent import AgentResolver
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "agent": {
-                "id": "custom-soul",
-                "name": "MySoul",
-                "signing_key": "soul-key"
-            }
-        }))
+        config_path.write_text(
+            json.dumps(
+                {
+                    "agent": {
+                        "id": "custom-soul",
+                        "name": "MySoul",
+                        "signing_key": "soul-key",
+                    }
+                }
+            )
+        )
 
         # Patch config path and reload
         monkeypatch.setattr(LTMConfig, "get_config_path", lambda: config_path)
@@ -212,12 +205,9 @@ class TestConfigIntegration:
         from ltm.lifecycle.injection import get_memory_budget
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "budget": {
-                "context_percent": 0.20,
-                "context_size": 100000
-            }
-        }))
+        config_path.write_text(
+            json.dumps({"budget": {"context_percent": 0.20, "context_size": 100000}})
+        )
 
         monkeypatch.setattr(LTMConfig, "get_config_path", lambda: config_path)
         reload_config()
@@ -233,11 +223,15 @@ class TestConfigIntegration:
         from ltm.storage import MemoryStore
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "decay": {
-                "low_days": 5  # Changed from 1 to 5
-            }
-        }))
+        config_path.write_text(
+            json.dumps(
+                {
+                    "decay": {
+                        "low_days": 5  # Changed from 1 to 5
+                    }
+                }
+            )
+        )
 
         monkeypatch.setattr(LTMConfig, "get_config_path", lambda: config_path)
         reload_config()
@@ -253,7 +247,7 @@ class TestConfigIntegration:
             kind=MemoryKind.LEARNINGS,
             content="Test content",
             impact=ImpactLevel.LOW,
-            created_at=datetime.now() - timedelta(days=3)
+            created_at=datetime.now() - timedelta(days=3),
         )
 
         # With default 1-day threshold, this would decay
@@ -267,6 +261,6 @@ class TestConfigIntegration:
             kind=MemoryKind.LEARNINGS,
             content="Old content",
             impact=ImpactLevel.LOW,
-            created_at=datetime.now() - timedelta(days=6)
+            created_at=datetime.now() - timedelta(days=6),
         )
         assert decay.should_compact(old_memory)

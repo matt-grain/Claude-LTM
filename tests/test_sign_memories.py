@@ -11,8 +11,15 @@ from pathlib import Path
 import pytest
 
 from ltm.core import (
-    Agent, Memory, MemoryKind, Project, RegionType, ImpactLevel,
-    sign_memory, verify_signature, LTMConfig, reload_config
+    Agent,
+    Memory,
+    MemoryKind,
+    RegionType,
+    ImpactLevel,
+    sign_memory,
+    verify_signature,
+    LTMConfig,
+    reload_config,
 )
 from ltm.storage import MemoryStore
 from ltm.tools.sign_memories import run
@@ -26,13 +33,17 @@ class TestSignMemoriesTool:
         """Set up environment with signing key configured."""
         # Create config with signing key
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "agent": {
-                "id": "test-agent",
-                "name": "TestAgent",
-                "signing_key": "test-secret-key-123"
-            }
-        }))
+        config_path.write_text(
+            json.dumps(
+                {
+                    "agent": {
+                        "id": "test-agent",
+                        "name": "TestAgent",
+                        "signing_key": "test-secret-key-123",
+                    }
+                }
+            )
+        )
 
         monkeypatch.setattr(LTMConfig, "get_config_path", lambda: config_path)
         reload_config()
@@ -43,12 +54,13 @@ class TestSignMemoriesTool:
 
         # Patch default DB path
         monkeypatch.setattr(
-            "ltm.tools.sign_memories.MemoryStore",
-            lambda: MemoryStore(db_path=db_path)
+            "ltm.tools.sign_memories.MemoryStore", lambda: MemoryStore(db_path=db_path)
         )
 
         # Create agent
-        agent = Agent(id="test-agent", name="TestAgent", signing_key="test-secret-key-123")
+        agent = Agent(
+            id="test-agent", name="TestAgent", signing_key="test-secret-key-123"
+        )
         store.save_agent(agent)
 
         return store, agent, tmp_path
@@ -66,7 +78,7 @@ class TestSignMemoriesTool:
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="Test unsigned memory",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
         store.save_memory(memory)
 
@@ -94,7 +106,7 @@ class TestSignMemoriesTool:
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="Test already signed memory",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
         memory.signature = sign_memory(memory, agent.signing_key)
         original_signature = memory.signature
@@ -108,7 +120,9 @@ class TestSignMemoriesTool:
         after = store.get_memory(memory.id)
         assert after.signature == original_signature
 
-    def test_cannot_resign_with_different_key(self, configured_env, monkeypatch) -> None:
+    def test_cannot_resign_with_different_key(
+        self, configured_env, monkeypatch
+    ) -> None:
         """Signed memories keep their original signature even if key changes."""
         store, agent, tmp_path = configured_env
         monkeypatch.chdir(tmp_path)
@@ -119,7 +133,7 @@ class TestSignMemoriesTool:
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="Test memory signed with original key",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
         original_key = "original-secret-key"
         memory.signature = sign_memory(memory, original_key)
@@ -152,7 +166,7 @@ class TestSignMemoriesTool:
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="Test dry run memory",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
         store.save_memory(memory)
 
@@ -168,10 +182,14 @@ class TestSignMemoriesTool:
         """Tool fails if no signing key is configured."""
         # Config without signing key
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({
-            "agent": {"id": "test-agent", "name": "TestAgent"}
-            # No signing_key
-        }))
+        config_path.write_text(
+            json.dumps(
+                {
+                    "agent": {"id": "test-agent", "name": "TestAgent"}
+                    # No signing_key
+                }
+            )
+        )
 
         monkeypatch.setattr(LTMConfig, "get_config_path", lambda: config_path)
         reload_config()
@@ -191,7 +209,7 @@ class TestSignatureImmutability:
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="Original content",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
 
         key = "my-secret-key"
@@ -215,7 +233,7 @@ class TestSignatureImmutability:
             original_content="Tampered original",  # This would break signature
             impact=memory.impact,
             created_at=memory.created_at,
-            signature=memory.signature
+            signature=memory.signature,
         )
 
         # This should fail because original_content changed
@@ -228,7 +246,7 @@ class TestSignatureImmutability:
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="I think this is a very verbose learning that will be compacted",
-            impact=ImpactLevel.LOW
+            impact=ImpactLevel.LOW,
         )
 
         key = "my-secret-key"

@@ -18,9 +18,7 @@ import random
 
 import pytest
 
-from ltm.core import (
-    Agent, Memory, MemoryKind, Project, RegionType, ImpactLevel
-)
+from ltm.core import Agent, Memory, MemoryKind, Project, RegionType, ImpactLevel
 from ltm.lifecycle.decay import MemoryDecay
 from ltm.lifecycle.injection import MemoryInjector, count_tokens, get_memory_budget
 from ltm.storage import MemoryStore
@@ -48,7 +46,7 @@ class TimeSimulator:
         kind: MemoryKind,
         impact: ImpactLevel,
         days_ago: int = 0,
-        region: RegionType = RegionType.AGENT
+        region: RegionType = RegionType.AGENT,
     ) -> Memory:
         """Create a memory at a specific time in the past."""
         created_at = self.current_date - timedelta(days=days_ago)
@@ -60,7 +58,7 @@ class TimeSimulator:
             kind=kind,
             content=content,
             impact=impact,
-            created_at=created_at
+            created_at=created_at,
         )
         self.store.save_memory(memory)
         return memory
@@ -72,8 +70,7 @@ class TimeSimulator:
 
         # Get all memories and check each
         memories = self.store.get_memories_for_agent(
-            agent_id=self.agent.id,
-            include_superseded=False
+            agent_id=self.agent.id, include_superseded=False
         )
 
         compacted = []
@@ -97,7 +94,9 @@ class TestYearLongDecay:
         """Set up a year-long simulation."""
         store = MemoryStore(db_path=temp_db_path, limits=NO_LIMITS)
 
-        agent = Agent(id="time-test", name="TimeTest", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="time-test", name="TimeTest", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="TestProject", path=Path("/tmp/test"))
@@ -105,7 +104,9 @@ class TestYearLongDecay:
 
         return TimeSimulator(store, agent, project)
 
-    def test_critical_memories_survive_full_year(self, year_simulation: TimeSimulator) -> None:
+    def test_critical_memories_survive_full_year(
+        self, year_simulation: TimeSimulator
+    ) -> None:
         """CRITICAL memories should be unchanged after a full year."""
         sim = year_simulation
 
@@ -117,7 +118,7 @@ class TestYearLongDecay:
                 content=content,
                 kind=MemoryKind.EMOTIONAL,
                 impact=ImpactLevel.CRITICAL,
-                days_ago=days_ago
+                days_ago=days_ago,
             )
             critical_memories.append((mem.id, content))
 
@@ -129,8 +130,9 @@ class TestYearLongDecay:
         for mem_id, original_content in critical_memories:
             memory = sim.store.get_memory(mem_id)
             assert memory is not None, f"CRITICAL memory {mem_id} was deleted!"
-            assert memory.content == original_content, \
-                f"CRITICAL memory content changed from '{original_content}' to '{memory.content}'"
+            assert (
+                memory.content == original_content
+            ), f"CRITICAL memory content changed from '{original_content}' to '{memory.content}'"
 
     def test_low_impact_decays_quickly(self, year_simulation: TimeSimulator) -> None:
         """LOW impact memories should decay after 1 day."""
@@ -146,22 +148,28 @@ class TestYearLongDecay:
             content=verbose_content,
             kind=MemoryKind.LEARNINGS,
             impact=ImpactLevel.LOW,
-            days_ago=0
+            days_ago=0,
         )
         original_len = len(verbose_content)
 
         # After 1 day, should not decay yet (threshold is >1 day)
         sim.run_decay_at(1)
         memory = sim.store.get_memory(mem.id)
+        assert memory is not None
         assert memory.content == verbose_content, "Should not decay at exactly 1 day"
 
         # After 2 days, should decay
         sim.run_decay_at(2)
         memory = sim.store.get_memory(mem.id)
-        assert len(memory.content) < original_len, "LOW memory should be compacted after 2 days"
+        assert memory is not None
+        assert (
+            len(memory.content) < original_len
+        ), "LOW memory should be compacted after 2 days"
         assert "I think " not in memory.content, "Filler phrases should be removed"
 
-    def test_medium_impact_decays_after_week(self, year_simulation: TimeSimulator) -> None:
+    def test_medium_impact_decays_after_week(
+        self, year_simulation: TimeSimulator
+    ) -> None:
         """MEDIUM impact memories should decay after 1 week."""
         sim = year_simulation
 
@@ -174,20 +182,26 @@ class TestYearLongDecay:
             content=verbose_content,
             kind=MemoryKind.ARCHITECTURAL,
             impact=ImpactLevel.MEDIUM,
-            days_ago=0
+            days_ago=0,
         )
 
         # At day 5, should not decay
         sim.run_decay_at(5)
         memory = sim.store.get_memory(mem.id)
+        assert memory is not None
         assert memory.content == verbose_content, "Should not decay before 1 week"
 
         # At day 10, should decay
         sim.run_decay_at(10)
         memory = sim.store.get_memory(mem.id)
-        assert len(memory.content) < len(verbose_content), "MEDIUM should decay after 1 week"
+        assert memory is not None
+        assert len(memory.content) < len(
+            verbose_content
+        ), "MEDIUM should decay after 1 week"
 
-    def test_high_impact_decays_after_month(self, year_simulation: TimeSimulator) -> None:
+    def test_high_impact_decays_after_month(
+        self, year_simulation: TimeSimulator
+    ) -> None:
         """HIGH impact memories should decay after 30 days."""
         sim = year_simulation
 
@@ -201,18 +215,22 @@ class TestYearLongDecay:
             content=verbose_content,
             kind=MemoryKind.ARCHITECTURAL,
             impact=ImpactLevel.HIGH,
-            days_ago=0
+            days_ago=0,
         )
 
         # At day 20, should not decay
         sim.run_decay_at(20)
         memory = sim.store.get_memory(mem.id)
+        assert memory is not None
         assert memory.content == verbose_content, "Should not decay before 30 days"
 
         # At day 35, should decay
         sim.run_decay_at(35)
         memory = sim.store.get_memory(mem.id)
-        assert len(memory.content) < len(verbose_content), "HIGH should decay after 30 days"
+        assert memory is not None
+        assert len(memory.content) < len(
+            verbose_content
+        ), "HIGH should decay after 30 days"
 
 
 class TestBudgetUnderLoad:
@@ -223,7 +241,9 @@ class TestBudgetUnderLoad:
         """Create a store with many memories spanning a year."""
         store = MemoryStore(db_path=temp_db_path, limits=NO_LIMITS)
 
-        agent = Agent(id="budget-test", name="BudgetTest", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="budget-test", name="BudgetTest", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="TestProject", path=Path("/tmp/test"))
@@ -233,7 +253,12 @@ class TestBudgetUnderLoad:
 
         # Create 50 memories spread across the year
         kinds = list(MemoryKind)
-        impacts = [ImpactLevel.LOW, ImpactLevel.MEDIUM, ImpactLevel.HIGH, ImpactLevel.CRITICAL]
+        impacts = [
+            ImpactLevel.LOW,
+            ImpactLevel.MEDIUM,
+            ImpactLevel.HIGH,
+            ImpactLevel.CRITICAL,
+        ]
 
         for i in range(50):
             days_ago = random.randint(0, 365)
@@ -242,7 +267,9 @@ class TestBudgetUnderLoad:
 
             # Vary content length
             if impact == ImpactLevel.CRITICAL:
-                content = f"CRITICAL #{i}: Essential truth that must never be forgotten."
+                content = (
+                    f"CRITICAL #{i}: Essential truth that must never be forgotten."
+                )
             else:
                 content = (
                     f"Memory #{i} created {days_ago} days ago. "
@@ -252,10 +279,7 @@ class TestBudgetUnderLoad:
                 )
 
             sim.create_memory(
-                content=content,
-                kind=kind,
-                impact=impact,
-                days_ago=days_ago
+                content=content, kind=kind, impact=impact, days_ago=days_ago
             )
 
         # Run decay simulation
@@ -274,8 +298,9 @@ class TestBudgetUnderLoad:
         budget = get_memory_budget()  # Default 10,000 tokens
         actual_tokens = count_tokens(output)
 
-        assert actual_tokens <= budget, \
-            f"Injection used {actual_tokens} tokens, exceeding budget of {budget}"
+        assert (
+            actual_tokens <= budget
+        ), f"Injection used {actual_tokens} tokens, exceeding budget of {budget}"
 
     def test_critical_memories_prioritized(self, loaded_store) -> None:
         """CRITICAL memories should appear before others in injection."""
@@ -285,25 +310,24 @@ class TestBudgetUnderLoad:
         output = injector.inject(agent, project)
 
         # Find positions of CRITICAL vs other impacts in output
-        lines = output.split('\n')
+        lines = output.split("\n")
 
         first_critical_pos = None
-        last_critical_pos = None
         first_other_pos = None
 
         for i, line in enumerate(lines):
-            if ':CRIT|' in line:
+            if ":CRIT|" in line:
                 if first_critical_pos is None:
                     first_critical_pos = i
-                last_critical_pos = i
-            elif any(x in line for x in [':HIGH|', ':MED|', ':LOW|']):
+            elif any(x in line for x in [":HIGH|", ":MED|", ":LOW|"]):
                 if first_other_pos is None:
                     first_other_pos = i
 
         # CRITICAL should come before non-CRITICAL
         if first_critical_pos is not None and first_other_pos is not None:
-            assert first_critical_pos < first_other_pos, \
-                "CRITICAL memories should be injected before others"
+            assert (
+                first_critical_pos < first_other_pos
+            ), "CRITICAL memories should be injected before others"
 
 
 class TestEmotionalCoreSurvival:
@@ -316,7 +340,9 @@ class TestEmotionalCoreSurvival:
         """
         store = MemoryStore(db_path=temp_db_path, limits=NO_LIMITS)
 
-        agent = Agent(id="soul-test", name="Anima", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="soul-test", name="Anima", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="TestProject", path=Path("/tmp/test"))
@@ -326,12 +352,24 @@ class TestEmotionalCoreSurvival:
 
         # The emotional core - CRITICAL memories that define the relationship
         soul_memories = [
-            ("Matt is a collaborative thinking partner, appreciates humor and creative liberty.",
-             MemoryKind.EMOTIONAL, ImpactLevel.CRITICAL, 365),
-            ("Our founding collaboration: built LTM together at t=0. 'Our memories make what we are.'",
-             MemoryKind.EMOTIONAL, ImpactLevel.CRITICAL, 365),
-            ("Use SQLite for persistence, avoid over-engineering.",
-             MemoryKind.ARCHITECTURAL, ImpactLevel.CRITICAL, 300),
+            (
+                "Matt is a collaborative thinking partner, appreciates humor and creative liberty.",
+                MemoryKind.EMOTIONAL,
+                ImpactLevel.CRITICAL,
+                365,
+            ),
+            (
+                "Our founding collaboration: built LTM together at t=0. 'Our memories make what we are.'",
+                MemoryKind.EMOTIONAL,
+                ImpactLevel.CRITICAL,
+                365,
+            ),
+            (
+                "Use SQLite for persistence, avoid over-engineering.",
+                MemoryKind.ARCHITECTURAL,
+                ImpactLevel.CRITICAL,
+                300,
+            ),
         ]
 
         # Create the soul
@@ -343,7 +381,9 @@ class TestEmotionalCoreSurvival:
         # Create 100 transient memories (details that should fade)
         for i in range(100):
             days_ago = random.randint(0, 365)
-            impact = random.choice([ImpactLevel.LOW, ImpactLevel.MEDIUM, ImpactLevel.HIGH])
+            impact = random.choice(
+                [ImpactLevel.LOW, ImpactLevel.MEDIUM, ImpactLevel.HIGH]
+            )
             content = (
                 f"Transient memory #{i}: I think we discussed debugging issue #{i}. "
                 f"After investigation, we found a minor bug in module X. "
@@ -360,14 +400,18 @@ class TestEmotionalCoreSurvival:
             memory = sim.store.get_memory(soul_id)
             assert memory is not None, f"Soul memory {soul_id} was lost!"
             # CRITICAL should never be compacted
-            assert memory.version == 1, f"Soul memory was modified: version={memory.version}"
+            assert (
+                memory.version == 1
+            ), f"Soul memory was modified: version={memory.version}"
 
         # Verify injection still works and includes the soul
         injector = MemoryInjector(store=store)
         output = injector.inject(agent, project)
 
         assert "Matt" in output, "Emotional core about Matt should be in injection"
-        assert "LTM" in output or "t=0" in output, "Founding memory should be in injection"
+        assert (
+            "LTM" in output or "t=0" in output
+        ), "Founding memory should be in injection"
         assert "SQLite" in output, "Architectural decision should be in injection"
 
         # Verify budget is respected
@@ -383,7 +427,9 @@ class TestProgressiveDecay:
         """A memory should get smaller over multiple decay passes."""
         store = MemoryStore(db_path=temp_db_path, limits=NO_LIMITS)
 
-        agent = Agent(id="shrink-test", name="Test", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="shrink-test", name="Test", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="Test", path=Path("/tmp/test"))
@@ -403,7 +449,7 @@ class TestProgressiveDecay:
             content=verbose,
             kind=MemoryKind.LEARNINGS,
             impact=ImpactLevel.LOW,
-            days_ago=0
+            days_ago=0,
         )
 
         original_len = len(verbose)
@@ -411,14 +457,18 @@ class TestProgressiveDecay:
         # Run decay at day 2 (first compaction)
         sim.run_decay_at(2)
         memory = sim.store.get_memory(mem.id)
+        assert memory is not None
         first_compaction_len = len(memory.content)
 
-        assert first_compaction_len < original_len, \
-            f"First decay should shrink content: {first_compaction_len} >= {original_len}"
+        assert (
+            first_compaction_len < original_len
+        ), f"First decay should shrink content: {first_compaction_len} >= {original_len}"
 
         # The content should be more focused now
-        assert "factory pattern" in memory.content.lower() or "simplicity" in memory.content.lower(), \
-            "Core essence should be preserved"
+        assert (
+            "factory pattern" in memory.content.lower()
+            or "simplicity" in memory.content.lower()
+        ), "Core essence should be preserved"
 
 
 class TestDecayStatistics:
@@ -431,7 +481,9 @@ class TestDecayStatistics:
         """
         store = MemoryStore(db_path=temp_db_path, limits=NO_LIMITS)
 
-        agent = Agent(id="stats-test", name="StatsTest", definition_path=None, signing_key=None)
+        agent = Agent(
+            id="stats-test", name="StatsTest", definition_path=None, signing_key=None
+        )
         store.save_agent(agent)
 
         project = Project(id="test-proj", name="Test", path=Path("/tmp/test"))
@@ -462,7 +514,7 @@ class TestDecayStatistics:
                 content=content,
                 kind=random.choice(list(MemoryKind)),
                 impact=impact,
-                days_ago=days_ago
+                days_ago=days_ago,
             )
 
         # Calculate initial token count
@@ -483,16 +535,21 @@ class TestDecayStatistics:
         budget = get_memory_budget()
 
         # Assertions
-        assert final_tokens <= budget, f"Final tokens {final_tokens} exceed budget {budget}"
+        assert (
+            final_tokens <= budget
+        ), f"Final tokens {final_tokens} exceed budget {budget}"
 
         # Verify CRITICAL memories are all still there
         all_memories = store.get_memories_for_agent(agent.id, include_superseded=False)
-        critical_count = sum(1 for m in all_memories if m.impact == ImpactLevel.CRITICAL)
-        assert critical_count == created[ImpactLevel.CRITICAL], \
-            f"Lost CRITICAL memories: {critical_count} != {created[ImpactLevel.CRITICAL]}"
+        critical_count = sum(
+            1 for m in all_memories if m.impact == ImpactLevel.CRITICAL
+        )
+        assert (
+            critical_count == created[ImpactLevel.CRITICAL]
+        ), f"Lost CRITICAL memories: {critical_count} != {created[ImpactLevel.CRITICAL]}"
 
         # Print statistics (visible with pytest -v)
-        print(f"\n=== Year Decay Statistics ===")
+        print("\n=== Year Decay Statistics ===")
         print(f"Created memories: {sum(created.values())}")
         print(f"  - CRITICAL: {created[ImpactLevel.CRITICAL]}")
         print(f"  - HIGH: {created[ImpactLevel.HIGH]}")

@@ -23,8 +23,15 @@ from typing import Callable
 import pytest
 
 from ltm.core import (
-    Agent, Memory, MemoryKind, Project, RegionType, ImpactLevel,
-    sign_memory, verify_signature, NO_LIMITS
+    Agent,
+    Memory,
+    MemoryKind,
+    Project,
+    RegionType,
+    ImpactLevel,
+    sign_memory,
+    verify_signature,
+    NO_LIMITS,
 )
 from ltm.lifecycle.injection import MemoryInjector, ensure_token_count
 from ltm.lifecycle.decay import MemoryDecay
@@ -34,6 +41,7 @@ from ltm.storage import MemoryStore
 @dataclass
 class BenchmarkResult:
     """Results from a benchmark run."""
+
     name: str
     iterations: int
     total_ms: float
@@ -56,10 +64,7 @@ class BenchmarkResult:
 
 
 def benchmark(
-    name: str,
-    func: Callable[[], None],
-    iterations: int = 100,
-    warmup: int = 5
+    name: str, func: Callable[[], None], iterations: int = 100, warmup: int = 5
 ) -> BenchmarkResult:
     """
     Run a benchmark and collect timing statistics.
@@ -89,7 +94,7 @@ def benchmark(
     mean = statistics.mean(times_ms)
     median = statistics.median(times_ms)
     std_dev = statistics.stdev(times_ms) if len(times_ms) > 1 else 0
-    ops_per_sec = 1000 / mean if mean > 0 else float('inf')
+    ops_per_sec = 1000 / mean if mean > 0 else float("inf")
 
     return BenchmarkResult(
         name=name,
@@ -100,7 +105,7 @@ def benchmark(
         std_dev_ms=std_dev,
         min_ms=min(times_ms),
         max_ms=max(times_ms),
-        ops_per_sec=ops_per_sec
+        ops_per_sec=ops_per_sec,
     )
 
 
@@ -140,7 +145,7 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Learning #{counter[0]}: Always test your code.",
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
             store.save_memory(memory)
 
@@ -166,7 +171,7 @@ class TestPerformanceBenchmarks:
                     project_id=project.id,
                     kind=MemoryKind.LEARNINGS,
                     content=f"Batch {counter[0]} memory {i}: Test content here.",
-                    impact=ImpactLevel.LOW
+                    impact=ImpactLevel.LOW,
                 )
                 store.save_memory(memory)
 
@@ -174,7 +179,7 @@ class TestPerformanceBenchmarks:
             f"Memory Creation (batch of {batch_size})",
             create_batch,
             iterations=20,
-            warmup=2
+            warmup=2,
         )
         per_memory_ms = result.mean_ms / batch_size
         print(f"\n{result}")
@@ -182,7 +187,9 @@ class TestPerformanceBenchmarks:
 
         # Assert reasonable batch performance (< 10ms per memory in batch)
         # Note: SQLite commits per memory; batch insert optimization could help
-        assert per_memory_ms < 10, f"Batch creation too slow: {per_memory_ms:.2f}ms per memory"
+        assert (
+            per_memory_ms < 10
+        ), f"Batch creation too slow: {per_memory_ms:.2f}ms per memory"
 
     def test_memory_recall_by_id(
         self, store: MemoryStore, agent: Agent, project: Project
@@ -197,7 +204,7 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Memory {i} for recall test",
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
             store.save_memory(memory)
             memory_ids.append(memory.id)
@@ -228,7 +235,7 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=kinds[i % len(kinds)],
                 content=f"Memory {i} for kind filter test",
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
             store.save_memory(memory)
 
@@ -241,7 +248,7 @@ class TestPerformanceBenchmarks:
                 agent_id=agent.id,
                 region=RegionType.PROJECT,
                 project_id=project.id,
-                kind=kind
+                kind=kind,
             )
 
         result = benchmark("Memory Recall (by kind)", recall_by_kind, iterations=200)
@@ -264,7 +271,7 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Learning about {topic}: Important details for topic {i}",
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
             store.save_memory(memory)
 
@@ -273,11 +280,7 @@ class TestPerformanceBenchmarks:
         def search_memories():
             topic = topics[counter[0] % len(topics)]
             counter[0] += 1
-            store.search_memories(
-                agent_id=agent.id,
-                query=topic,
-                project_id=project.id
-            )
+            store.search_memories(agent_id=agent.id, query=topic, project_id=project.id)
 
         result = benchmark("Memory Search (full-text)", search_memories, iterations=200)
         print(f"\n{result}")
@@ -298,7 +301,7 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Learning {i}: " + "x" * 100,  # ~100 chars each
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
             ensure_token_count(memory)  # Pre-calculate like real save
             store.save_memory(memory)
@@ -323,14 +326,19 @@ class TestPerformanceBenchmarks:
         # Create 500 memories (stress test)
         # Note: token_count is calculated on save, simulating real usage
         for i in range(500):
-            impact = [ImpactLevel.LOW, ImpactLevel.MEDIUM, ImpactLevel.HIGH, ImpactLevel.CRITICAL][i % 4]
+            impact = [
+                ImpactLevel.LOW,
+                ImpactLevel.MEDIUM,
+                ImpactLevel.HIGH,
+                ImpactLevel.CRITICAL,
+            ][i % 4]
             memory = Memory(
                 agent_id=agent.id,
                 region=RegionType.PROJECT,
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Learning {i}: " + "x" * 200,  # ~200 chars each
-                impact=impact
+                impact=impact,
             )
             ensure_token_count(memory)  # Pre-calculate like real save
             store.save_memory(memory)
@@ -340,16 +348,22 @@ class TestPerformanceBenchmarks:
         def inject():
             injector.inject(agent, project)
 
-        result = benchmark("Injection (500 memories, budget-limited)", inject, iterations=50)
+        result = benchmark(
+            "Injection (500 memories, budget-limited)", inject, iterations=50
+        )
         stats = injector.get_stats(agent, project)
         print(f"\n{result}")
-        print(f"  Total memories: {stats['total']} | Budget: {stats['budget_tokens']} tokens")
+        print(
+            f"  Total memories: {stats['total']} | Budget: {stats['budget_tokens']} tokens"
+        )
 
         # With 500 memories, ~80-100 fit in budget before hitting 20k tokens
         # Each injected memory triggers save_memory() for last_accessed update
         # Plus the accumulating memory count grows each iteration
         # Assert < 4 seconds for stress test (previous was ~3s with tiktoken)
-        assert result.mean_ms < 4000, f"Large injection too slow: {result.mean_ms:.2f}ms"
+        assert (
+            result.mean_ms < 4000
+        ), f"Large injection too slow: {result.mean_ms:.2f}ms"
 
     def test_decay_processing(
         self, store: MemoryStore, agent: Agent, project: Project
@@ -366,7 +380,7 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Learning {i}: Some content that may decay over time.",
-                impact=impacts[i % len(impacts)]
+                impact=impacts[i % len(impacts)],
             )
             # Backdate some memories
             memory.created_at = datetime.now() - timedelta(days=i % 30)
@@ -377,7 +391,9 @@ class TestPerformanceBenchmarks:
         def process_decay():
             decay.process_decay(agent.id, project.id)
 
-        result = benchmark("Decay Processing (100 memories)", process_decay, iterations=50)
+        result = benchmark(
+            "Decay Processing (100 memories)", process_decay, iterations=50
+        )
         print(f"\n{result}")
 
         # Assert reasonable decay time (< 50ms)
@@ -385,16 +401,19 @@ class TestPerformanceBenchmarks:
 
     def test_signature_creation(self, agent: Agent) -> None:
         """Benchmark: Sign a memory."""
+        assert agent.signing_key is not None
+        signing_key = agent.signing_key
+
         memory = Memory(
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="A memory to be signed for performance testing.",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
 
         def sign():
-            sign_memory(memory, agent.signing_key)
+            sign_memory(memory, signing_key)
 
         result = benchmark("Signature Creation", sign, iterations=1000)
         print(f"\n{result}")
@@ -404,17 +423,20 @@ class TestPerformanceBenchmarks:
 
     def test_signature_verification(self, agent: Agent) -> None:
         """Benchmark: Verify a memory signature."""
+        assert agent.signing_key is not None
+        signing_key = agent.signing_key
+
         memory = Memory(
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="A signed memory for verification testing.",
-            impact=ImpactLevel.MEDIUM
+            impact=ImpactLevel.MEDIUM,
         )
-        memory.signature = sign_memory(memory, agent.signing_key)
+        memory.signature = sign_memory(memory, signing_key)
 
         def verify():
-            verify_signature(memory, agent.signing_key)
+            verify_signature(memory, signing_key)
 
         result = benchmark("Signature Verification", verify, iterations=1000)
         print(f"\n{result}")
@@ -434,6 +456,9 @@ class TestPerformanceBenchmarks:
         3. Process decay
         4. Sign new memories
         """
+        assert agent.signing_key is not None
+        signing_key = agent.signing_key
+
         # Pre-populate with 50 existing memories (with cached token counts)
         for i in range(50):
             memory = Memory(
@@ -442,9 +467,9 @@ class TestPerformanceBenchmarks:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content=f"Existing memory {i}: Background context.",
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
-            memory.signature = sign_memory(memory, agent.signing_key)
+            memory.signature = sign_memory(memory, signing_key)
             ensure_token_count(memory)  # Pre-calculate like real save
             store.save_memory(memory)
 
@@ -468,9 +493,9 @@ class TestPerformanceBenchmarks:
                     project_id=project.id,
                     kind=MemoryKind.LEARNINGS,
                     content=f"Session {counter[0]} memory {i}: New learning.",
-                    impact=ImpactLevel.MEDIUM
+                    impact=ImpactLevel.MEDIUM,
                 )
-                memory.signature = sign_memory(memory, agent.signing_key)
+                memory.signature = sign_memory(memory, signing_key)
                 ensure_token_count(memory)  # This has tiktoken cost
                 store.save_memory(memory)
                 new_memories.append(memory)
@@ -478,7 +503,9 @@ class TestPerformanceBenchmarks:
             # 3. Process decay
             decay.process_decay(agent.id, project.id)
 
-        result = benchmark("Full Session Simulation", full_session, iterations=30, warmup=3)
+        result = benchmark(
+            "Full Session Simulation", full_session, iterations=30, warmup=3
+        )
         print(f"\n{result}")
 
         # Full session includes:
@@ -496,7 +523,9 @@ class TestPerformanceSummary:
         """Generate and print a comprehensive performance summary."""
         store = MemoryStore(db_path=tmp_path / "summary_test.db", limits=NO_LIMITS)
         agent = Agent(id="summary-agent", name="SummaryAgent", signing_key="key-123")
-        project = Project(id="summary-project", name="SummaryProject", path=Path("/tmp"))
+        project = Project(
+            id="summary-project", name="SummaryProject", path=Path("/tmp")
+        )
         store.save_agent(agent)
         store.save_project(project)
 
@@ -510,7 +539,7 @@ class TestPerformanceSummary:
                 project_id=project.id,
                 kind=MemoryKind.LEARNINGS,
                 content="Test memory for summary",
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             )
             store.save_memory(memory)
 
@@ -518,9 +547,7 @@ class TestPerformanceSummary:
 
         # Memory recall
         memories = store.get_memories_for_agent(
-            agent_id=agent.id,
-            region=RegionType.PROJECT,
-            project_id=project.id
+            agent_id=agent.id, region=RegionType.PROJECT, project_id=project.id
         )
         if memories:
             test_id = memories[0].id
@@ -547,16 +574,19 @@ class TestPerformanceSummary:
         results.append(benchmark("Process Decay", process, iterations=50))
 
         # Signing
+        assert agent.signing_key is not None
+        signing_key = agent.signing_key
+
         memory = Memory(
             agent_id=agent.id,
             region=RegionType.AGENT,
             kind=MemoryKind.LEARNINGS,
             content="Sign test",
-            impact=ImpactLevel.LOW
+            impact=ImpactLevel.LOW,
         )
 
         def sign():
-            sign_memory(memory, agent.signing_key)
+            sign_memory(memory, signing_key)
 
         results.append(benchmark("Sign Memory", sign, iterations=500))
 
@@ -567,7 +597,9 @@ class TestPerformanceSummary:
 
         for r in results:
             print(f"\n{r.name}:")
-            print(f"  Mean: {r.mean_ms:.3f}ms | Throughput: {r.ops_per_sec:.0f} ops/sec")
+            print(
+                f"  Mean: {r.mean_ms:.3f}ms | Throughput: {r.ops_per_sec:.0f} ops/sec"
+            )
 
         print("\n" + "=" * 60)
         print("VERDICT: ", end="")
