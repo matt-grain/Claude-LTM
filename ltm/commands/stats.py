@@ -27,7 +27,7 @@ def run(args: list[str]) -> int:
     """
     # Handle help
     if args and args[0] in ("--help", "-h"):
-        print("Usage: ltm memory-stats")
+        print("Usage: uv run ltm memory-stats")
         print()
         print("Show memory statistics for the current agent.")
         print()
@@ -48,8 +48,7 @@ def run(args: list[str]) -> int:
 
     # Get all memories for this agent
     all_memories = store.get_memories_for_agent(
-        agent_id=agent.id,
-        project_id=project.id
+        agent_id=agent.id, project_id=project.id
     )
 
     if not all_memories:

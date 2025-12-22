@@ -159,25 +159,23 @@ If LTM is configured correctly, Claude should respond with awareness of your rel
 
 ```bash
 # Add signing key to a Claude agent
-ltm keygen my-agent
+uv run ltm keygen my-agent
 
 # Save a memory
-ltm remember "Never use print for logging"
+uv run ltm remember "Never use print for logging"
 
 # List memories
-ltm memories
+uv run ltm memories
 
 # Search memories
-ltm recall logging
+uv run ltm recall logging
 
 # Forget a memory
-ltm forget abc123
+uv run ltm forget abc123
 
 # Import seed memories
-ltm import-seeds seeds/
+uv run ltm import-seeds seeds/
 ```
-
-> **Note:** Run with `uv run ltm` if the virtual environment is not activated.
 
 For more commands, see [SETUP.md](SETUP.md#9-using-ltm-commands).
 

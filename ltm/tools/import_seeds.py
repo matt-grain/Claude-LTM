@@ -14,10 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from ltm.core import (
-    Memory, Agent, Project,
-    MemoryKind, ImpactLevel, RegionType
-)
+from ltm.core import Memory, Agent, Project, MemoryKind, ImpactLevel, RegionType
 from ltm.lifecycle.injection import ensure_token_count
 from ltm.storage import MemoryStore
 
@@ -62,11 +59,11 @@ def parse_seed_file(file_path: Path) -> Optional[dict]:
     }
 
     # Parse header fields
-    id_match = re.search(r'\*\*ID:\*\*\s*(\S+)', content)
+    id_match = re.search(r"\*\*ID:\*\*\s*(\S+)", content)
     if id_match:
         result["id"] = id_match.group(1)
         # Infer kind from ID prefix
-        id_prefix = result["id"].split('-')[0]
+        id_prefix = result["id"].split("-")[0]
         kind_map = {
             "EMOT": MemoryKind.EMOTIONAL,
             "ARCH": MemoryKind.ARCHITECTURAL,
@@ -75,45 +72,51 @@ def parse_seed_file(file_path: Path) -> Optional[dict]:
         }
         result["kind"] = kind_map.get(id_prefix, MemoryKind.LEARNINGS)
 
-    created_match = re.search(r'\*\*Created:\*\*\s*(\d{4}-\d{2}-\d{2})', content)
+    created_match = re.search(r"\*\*Created:\*\*\s*(\d{4}-\d{2}-\d{2})", content)
     if created_match:
         result["created_at"] = datetime.strptime(created_match.group(1), "%Y-%m-%d")
 
-    impact_match = re.search(r'\*\*Impact:\*\*\s*(CRITICAL|HIGH|MEDIUM|LOW)', content)
+    impact_match = re.search(r"\*\*Impact:\*\*\s*(CRITICAL|HIGH|MEDIUM|LOW)", content)
     if impact_match:
         result["impact"] = ImpactLevel(impact_match.group(1))
 
-    region_match = re.search(r'\*\*Region:\*\*\s*(AGENT|PROJECT)(?:\s*\(([^)]+)\))?', content)
+    region_match = re.search(
+        r"\*\*Region:\*\*\s*(AGENT|PROJECT)(?:\s*\(([^)]+)\))?", content
+    )
     if region_match:
         result["region"] = RegionType(region_match.group(1))
         if region_match.group(2):
             result["project"] = region_match.group(2)
 
-    confidence_match = re.search(r'\*\*Confidence:\*\*\s*([\d.]+)', content)
+    confidence_match = re.search(r"\*\*Confidence:\*\*\s*([\d.]+)", content)
     if confidence_match:
         result["confidence"] = float(confidence_match.group(1))
 
     # Parse raw content (between ## Raw Memory and ## Compacted Memory)
     raw_match = re.search(
-        r'## Raw Memory.*?\n\n(.*?)(?=\n## Compacted Memory)',
-        content,
-        re.DOTALL
+        r"## Raw Memory.*?\n\n(.*?)(?=\n## Compacted Memory)", content, re.DOTALL
     )
     if raw_match:
         result["raw_content"] = raw_match.group(1).strip()
 
     # Parse compacted content (in code block after ## Compacted Memory)
     compacted_match = re.search(
-        r'## Compacted Memory.*?```\n(.*?)\n```',
-        content,
-        re.DOTALL
+        r"## Compacted Memory.*?```\n(.*?)\n```", content, re.DOTALL
     )
     if compacted_match:
         result["compacted_content"] = compacted_match.group(1).strip()
 
     # Validate required fields
-    if not all([result["id"], result["created_at"], result["impact"],
-                result["region"], result["kind"], result["raw_content"]]):
+    if not all(
+        [
+            result["id"],
+            result["created_at"],
+            result["impact"],
+            result["region"],
+            result["kind"],
+            result["raw_content"],
+        ]
+    ):
         return None
 
     return result
@@ -130,8 +133,8 @@ def run(args: list[str]) -> int:
         Exit code (0 for success)
     """
     if not args:
-        print("Usage: ltm import-seeds <directory>")
-        print("Example: ltm import-seeds claude-docs/memories/")
+        print("Usage: uv run ltm import-seeds <directory>")
+        print("Example: uv run ltm import-seeds claude-docs/memories/")
         return 1
 
     seed_dir = Path(args[0])
@@ -200,7 +203,9 @@ def run(args: list[str]) -> int:
             id=parsed["id"],  # Preserve original ID
             agent_id=default_agent.id,
             region=parsed["region"],
-            project_id=default_project.id if parsed["region"] == RegionType.PROJECT else None,
+            project_id=default_project.id
+            if parsed["region"] == RegionType.PROJECT
+            else None,
             kind=parsed["kind"],
             content=content,
             original_content=parsed["raw_content"],

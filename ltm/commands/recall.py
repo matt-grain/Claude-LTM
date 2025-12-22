@@ -34,8 +34,7 @@ def lookup_by_id(memory_id: str) -> int:
 
     # Get all memories for this agent and search for matching ID
     all_memories = store.get_memories_for_agent(
-        agent_id=agent.id,
-        project_id=project.id
+        agent_id=agent.id, project_id=project.id
     )
 
     # Find memory with matching ID (partial match from start)
@@ -102,8 +101,8 @@ def run(args: list[str]) -> int:
                 print("Error: --id requires a memory ID")
                 return 1
         elif arg in ("--help", "-h"):
-            print("Usage: ltm recall [--full] <query>")
-            print("       ltm recall --id <memory_id>")
+            print("Usage: uv run ltm recall [--full] <query>")
+            print("       uv run ltm recall --id <memory_id>")
             print()
             print("Search memories matching the query, or look up by ID.")
             print()
@@ -112,9 +111,9 @@ def run(args: list[str]) -> int:
             print("  --id, -i      Look up a specific memory by ID (full or partial)")
             print("  --help, -h    Show this help message")
             print()
-            print("Example: ltm recall logging")
-            print("Example: ltm recall --full architecture")
-            print("Example: ltm recall --id f0087ff3")
+            print("Example: uv run ltm recall logging")
+            print("Example: uv run ltm recall --full architecture")
+            print("Example: uv run ltm recall --id f0087ff3")
             return 0
         elif not arg.startswith("-"):
             query_words.append(arg)
@@ -125,9 +124,9 @@ def run(args: list[str]) -> int:
         return lookup_by_id(lookup_id)
 
     if not query_words:
-        print("Usage: ltm recall [--full] <query>")
-        print("       ltm recall --id <memory_id>")
-        print("Example: ltm recall logging")
+        print("Usage: uv run ltm recall [--full] <query>")
+        print("       uv run ltm recall --id <memory_id>")
+        print("Example: uv run ltm recall logging")
         return 1
 
     query = " ".join(query_words)
@@ -140,10 +139,7 @@ def run(args: list[str]) -> int:
     # Search memories
     store = MemoryStore()
     memories = store.search_memories(
-        agent_id=agent.id,
-        query=query,
-        project_id=project.id,
-        limit=10
+        agent_id=agent.id, query=query, project_id=project.id, limit=10
     )
 
     if not memories:
@@ -159,7 +155,9 @@ def run(args: list[str]) -> int:
 
         if show_full:
             # Full output: show complete content
-            print(f"{i}. [{memory.kind.value}:{memory.impact.value}{confidence_marker}] ({date_str})")
+            print(
+                f"{i}. [{memory.kind.value}:{memory.impact.value}{confidence_marker}] ({date_str})"
+            )
             print(f"   ID: {memory.id}")
             print(f"   Region: {memory.region.value}")
             print("   Content:")
@@ -168,9 +166,11 @@ def run(args: list[str]) -> int:
             print()
         else:
             # Brief output: truncate content
-            print(f"{i}. [{memory.kind.value}:{memory.impact.value}{confidence_marker}] "
-                  f"{memory.content[:80]}{'...' if len(memory.content) > 80 else ''} "
-                  f"({date_str})")
+            print(
+                f"{i}. [{memory.kind.value}:{memory.impact.value}{confidence_marker}] "
+                f"{memory.content[:80]}{'...' if len(memory.content) > 80 else ''} "
+                f"({date_str})"
+            )
             print(f"   ID: {memory.id[:8]}")
             print()
 

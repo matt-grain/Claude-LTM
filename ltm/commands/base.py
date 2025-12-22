@@ -47,7 +47,7 @@ class BaseCommand(ABC):
     def __init__(
         self,
         store: Optional[MemoryStoreProtocol] = None,
-        project_path: Optional[Path] = None
+        project_path: Optional[Path] = None,
     ):
         """
         Initialize the command.
@@ -121,8 +121,7 @@ class BaseCommand(ABC):
             Exit code (0 for success)
         """
         parser = ArgumentParser(
-            prog=f"ltm {self.name}",
-            description=self.description
+            prog=f"uv run ltm {self.name}", description=self.description
         )
         self.configure_parser(parser)
 

@@ -28,9 +28,9 @@ def run(args: list[str]) -> int:
         Exit code (0 for success)
     """
     if not args:
-        print("Usage: ltm forget <memory-id>")
-        print("Example: ltm forget fa8382cf")
-        print("\nUse 'ltm memories' to see memory IDs")
+        print("Usage: uv run ltm forget <memory-id>")
+        print("Example: uv run ltm forget fa8382cf")
+        print("\nUse 'uv run ltm memories' to see memory IDs")
         return 1
 
     memory_id_prefix = args[0]
@@ -42,10 +42,7 @@ def run(args: list[str]) -> int:
     store = MemoryStore()
 
     # Find memory by ID prefix
-    memories = store.get_memories_for_agent(
-        agent_id=agent.id,
-        include_superseded=False
-    )
+    memories = store.get_memories_for_agent(agent_id=agent.id, include_superseded=False)
 
     matching = [m for m in memories if m.id.startswith(memory_id_prefix)]
 
@@ -76,7 +73,7 @@ def run(args: list[str]) -> int:
         created_at=now,
         last_accessed=now,
         previous_memory_id=memory.id,
-        version=1
+        version=1,
     )
 
     # Save the correction and mark old memory as superseded

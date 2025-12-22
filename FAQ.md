@@ -88,7 +88,7 @@ The key difference LTM enables: **trust can accumulate**. In stateless sessions,
 
 ```bash
 # Add signing key to an existing Claude agent
-ltm keygen my-agent
+uv run ltm keygen my-agent
 ```
 
 This finds the agent file (in `.claude/agents/` or `~/.claude/agents/`), generates a secure key, adds it to the frontmatter, and signs any existing unsigned memories.

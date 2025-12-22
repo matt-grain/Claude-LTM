@@ -19,8 +19,13 @@ import sys
 from datetime import datetime
 
 from ltm.core import (
-    Memory, MemoryKind, ImpactLevel, RegionType,
-    AgentResolver, sign_memory, should_sign
+    Memory,
+    MemoryKind,
+    ImpactLevel,
+    RegionType,
+    AgentResolver,
+    sign_memory,
+    should_sign,
 )
 from ltm.lifecycle.injection import ensure_token_count
 from ltm.storage import MemoryStore
@@ -35,7 +40,15 @@ def infer_impact(text: str) -> ImpactLevel:
     text_lower = text.lower()
 
     # Critical indicators
-    critical_words = ["crucial", "critical", "never", "always", "must", "essential", "vital"]
+    critical_words = [
+        "crucial",
+        "critical",
+        "never",
+        "always",
+        "must",
+        "essential",
+        "vital",
+    ]
     if any(word in text_lower for word in critical_words):
         return ImpactLevel.CRITICAL
 
@@ -63,26 +76,58 @@ def infer_kind(text: str) -> MemoryKind:
 
     # Architectural indicators
     arch_words = [
-        "architecture", "pattern", "structure", "layer", "service",
-        "repository", "router", "dependency", "injection", "solid",
-        "separation", "concern", "module", "component", "interface",
-        "api", "endpoint", "database", "schema"
+        "architecture",
+        "pattern",
+        "structure",
+        "layer",
+        "service",
+        "repository",
+        "router",
+        "dependency",
+        "injection",
+        "solid",
+        "separation",
+        "concern",
+        "module",
+        "component",
+        "interface",
+        "api",
+        "endpoint",
+        "database",
+        "schema",
     ]
     if any(word in text_lower for word in arch_words):
         return MemoryKind.ARCHITECTURAL
 
     # Achievement indicators
     achv_words = [
-        "completed", "finished", "done", "implemented", "shipped",
-        "released", "deployed", "launched", "achieved", "built"
+        "completed",
+        "finished",
+        "done",
+        "implemented",
+        "shipped",
+        "released",
+        "deployed",
+        "launched",
+        "achieved",
+        "built",
     ]
     if any(word in text_lower for word in achv_words):
         return MemoryKind.ACHIEVEMENTS
 
     # Emotional/relationship indicators
     emot_words = [
-        "prefer", "like", "enjoy", "appreciate", "style", "tone",
-        "humor", "formal", "casual", "communication", "relationship"
+        "prefer",
+        "like",
+        "enjoy",
+        "appreciate",
+        "style",
+        "tone",
+        "humor",
+        "formal",
+        "casual",
+        "communication",
+        "relationship",
     ]
     if any(word in text_lower for word in emot_words):
         return MemoryKind.EMOTIONAL
@@ -101,8 +146,13 @@ def infer_region(text: str, has_project: bool) -> RegionType:
 
     # Agent-wide indicators
     agent_words = [
-        "always", "general", "all projects", "everywhere",
-        "universally", "in general", "as a rule"
+        "always",
+        "general",
+        "all projects",
+        "everywhere",
+        "universally",
+        "in general",
+        "as a rule",
     ]
     if any(word in text_lower for word in agent_words):
         return RegionType.AGENT
@@ -117,29 +167,28 @@ def infer_region(text: str, has_project: bool) -> RegionType:
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser for the remember command."""
     parser = argparse.ArgumentParser(
-        prog="ltm remember",
+        prog="uv run ltm remember",
         description="Save a memory to long-term storage.",
-        epilog="If flags are not provided, values are inferred from text content."
+        epilog="If flags are not provided, values are inferred from text content.",
     )
+    parser.add_argument("text", nargs="+", help="The memory content to save")
     parser.add_argument(
-        "text",
-        nargs="+",
-        help="The memory content to save"
-    )
-    parser.add_argument(
-        "--region", "-r",
+        "--region",
+        "-r",
         choices=["agent", "project"],
-        help="Where to store: 'agent' (cross-project) or 'project' (local)"
+        help="Where to store: 'agent' (cross-project) or 'project' (local)",
     )
     parser.add_argument(
-        "--kind", "-k",
+        "--kind",
+        "-k",
         choices=["emotional", "architectural", "learnings", "achievements"],
-        help="Memory type"
+        help="Memory type",
     )
     parser.add_argument(
-        "--impact", "-i",
+        "--impact",
+        "-i",
         choices=["low", "medium", "high", "critical"],
-        help="Importance level"
+        help="Importance level",
     )
     return parser
 
@@ -155,10 +204,12 @@ def run(args: list[str]) -> int:
         Exit code (0 for success)
     """
     if not args:
-        print("Usage: ltm remember <text>")
-        print("       ltm remember --region agent <text>")
-        print("       ltm remember --kind emotional --impact critical <text>")
-        print("\nExample: ltm remember This is crucial: never use print() for logging")
+        print("Usage: uv run ltm remember <text>")
+        print("       uv run ltm remember --region agent <text>")
+        print("       uv run ltm remember --kind emotional --impact critical <text>")
+        print(
+            "\nExample: uv run ltm remember This is crucial: never use print() for logging"
+        )
         print("\nFlags:")
         print("  --region, -r  agent|project    Where to store (default: inferred)")
         print("  --kind, -k    emotional|architectural|learnings|achievements")
@@ -212,7 +263,7 @@ def run(args: list[str]) -> int:
         agent_id=agent.id,
         kind=kind,
         region=region,
-        project_id=project.id if region == RegionType.PROJECT else None
+        project_id=project.id if region == RegionType.PROJECT else None,
     )
 
     # Create the memory
@@ -227,7 +278,7 @@ def run(args: list[str]) -> int:
         confidence=1.0,
         created_at=now,
         last_accessed=now,
-        previous_memory_id=previous.id if previous else None
+        previous_memory_id=previous.id if previous else None,
     )
 
     # Sign memory if agent has a signing key
@@ -241,11 +292,17 @@ def run(args: list[str]) -> int:
     store.save_memory(memory)
 
     # Output confirmation
-    region_str = f"PROJECT ({project.name})" if region == RegionType.PROJECT else "AGENT"
-    linked_str = f"\nLinked to previous {kind.value.lower()} memory." if previous else ""
+    region_str = (
+        f"PROJECT ({project.name})" if region == RegionType.PROJECT else "AGENT"
+    )
+    linked_str = (
+        f"\nLinked to previous {kind.value.lower()} memory." if previous else ""
+    )
     signed_str = " [signed]" if memory.signature else ""
 
-    print(f"Remembered as {kind.value} ({impact.value} impact) in {region_str} region.{linked_str}")
+    print(
+        f"Remembered as {kind.value} ({impact.value} impact) in {region_str} region.{linked_str}"
+    )
     print(f"Memory ID: {memory.id[:8]}{signed_str}")
 
     return 0

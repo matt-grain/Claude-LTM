@@ -10,7 +10,7 @@ def main() -> int:
     """Main entry point for LTM CLI."""
     if len(sys.argv) < 2:
         print("LTM - Long Term Memory for Claude")
-        print("Usage: ltm <command> [args]")
+        print("Usage: uv run ltm <command> [args]")
         print("")
         print("Commands:")
         print("  remember <text>  Save a memory")

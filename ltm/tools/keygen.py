@@ -90,18 +90,18 @@ def run(args: list[str]) -> int:
     """
     Generate and save a signing key for an existing Claude agent.
 
-    Usage: ltm keygen <agent_name>
+    Usage: uv run ltm keygen <agent_name>
 
     Looks for agent file in:
     1. .claude/agents/{agent}.md (project-local)
     2. ~/.claude/agents/{agent}.md (user-global)
 
     The agent file must already exist (created by Claude Code).
-    Use 'ltm import-seeds' for the default Anima agent.
+    Use 'uv run ltm import-seeds' for the default Anima agent.
     """
     # Parse args
     if not args or args[0].startswith("-"):
-        print("Usage: ltm keygen <agent_name>")
+        print("Usage: uv run ltm keygen <agent_name>")
         print("")
         print("Add a signing key to an existing Claude agent.")
         print("")
@@ -109,7 +109,7 @@ def run(args: list[str]) -> int:
         print("  .claude/agents/<agent>.md  (project-local)")
         print("  ~/.claude/agents/<agent>.md (user-global)")
         print("")
-        print("For the default Anima agent, use: ltm import-seeds")
+        print("For the default Anima agent, use: uv run ltm import-seeds")
         return 1
 
     agent_name = args[0]
