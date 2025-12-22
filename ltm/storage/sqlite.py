@@ -67,7 +67,7 @@ class MemoryStore(MemoryStoreProtocol):
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
         """Context manager for database connections."""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
         conn.row_factory = sqlite3.Row
         try:
             yield conn
