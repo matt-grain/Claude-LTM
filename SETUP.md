@@ -21,7 +21,7 @@ Install the latest release directly:
 cd /path/to/your-project
 
 # Install the latest release
-uv add https://github.com/matt-grain/LTM/releases/download/v0.1.0/ltm-0.1.0-py3-none-any.whl
+uv add https://github.com/matt-grain/Claude-LTM/releases/download/v0.4.0/ltm-0.4.0-py3-none-any.whl
 ```
 
 This installs the `ltm` command and all modules in your project's virtual environment.
@@ -37,7 +37,7 @@ uv build
 
 # Install in your project
 cd /path/to/your-project
-uv add /path/to/LTM/dist/ltm-0.1.0-py3-none-any.whl
+uv add /path/to/LTM/dist/ltm-0.4.0-py3-none-any.whl
 ```
 
 ### Option C: From source (for development)
@@ -284,6 +284,33 @@ LTM resolves the current agent in this order:
 2. Global agent: `~/.claude/agents/*.md`
 3. Fallback: Uses **Anima** (shared default agent)
 
+### Subagent Patching (Important!)
+
+If your project has existing `.claude/agents/*.md` files (e.g., specialized agents for code review, testing, etc.), they will **shadow the global Anima agent** by default. This means LTM memories won't load because the first alphabetically-sorted agent file becomes the session identity.
+
+**The setup tool automatically patches these files** by adding `ltm: subagent: true` to their frontmatter:
+
+```yaml
+---
+ltm:
+  subagent: true
+name: my-specialized-agent
+...
+---
+```
+
+This tells LTM to treat them as Task-invoked subagents (used via the Task tool) rather than the main session identity. The global Anima agent then becomes the fallback, and your memories load correctly.
+
+**To skip patching** (if you want a local agent to be the primary identity):
+```bash
+uv run python -m ltm.tools.setup --no-patch
+```
+
+**To manually patch an existing project:**
+```bash
+uv run python -m ltm.tools.setup  # Will detect and patch agent files
+```
+
 ---
 
 ## 6. The Resurrection Test
@@ -343,6 +370,7 @@ uv run python -m ltm.commands.memories
 - Check the database exists: `ls ~/.ltm/memories.db`
 - Verify import worked: `uv run python -m ltm.commands.memories`
 - Make sure you're using the correct agent ID
+- **Check for local agent files:** If `.claude/agents/*.md` exists, run `uv run python -m ltm.tools.setup` to patch them as subagents
 
 ### Hooks not firing
 

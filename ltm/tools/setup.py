@@ -9,6 +9,7 @@ Works for users who installed via wheel and don't have access to the source tree
 """
 
 import json
+import re
 import shutil
 import sys
 from importlib import resources
@@ -84,6 +85,94 @@ def setup_commands(project_dir: Path, force: bool = False) -> tuple[int, int]:
         copied += 1
 
     return (copied, skipped)
+
+
+def patch_subagents(project_dir: Path) -> tuple[int, int]:
+    """
+    Patch agent definition files to add subagent: true marker.
+
+    If a project has .claude/agents/*.md files without ltm: subagent: true,
+    they will shadow the global Anima agent. This function adds the marker
+    so these agents are treated as subagents (invoked via Task tool) rather
+    than the main session identity.
+
+    Returns:
+        Tuple of (patched_count, skipped_count)
+    """
+    agents_dir = project_dir / ".claude" / "agents"
+
+    if not agents_dir.exists():
+        return (0, 0)
+
+    patched = 0
+    skipped = 0
+
+    for agent_file in sorted(agents_dir.glob("*.md")):
+        content = agent_file.read_text(encoding="utf-8")
+
+        # Check if it already has ltm: subagent: true
+        if _has_subagent_marker(content):
+            skipped += 1
+            continue
+
+        # Check if it has frontmatter at all
+        if not content.startswith("---"):
+            print(f"  ⏭️  {agent_file.name} (no frontmatter, skipping)")
+            skipped += 1
+            continue
+
+        # Add ltm: subagent: true after the opening ---
+        new_content = _add_subagent_marker(content)
+
+        if new_content != content:
+            agent_file.write_text(new_content, encoding="utf-8")
+            print(f"  ✅ {agent_file.name} (marked as subagent)")
+            patched += 1
+        else:
+            skipped += 1
+
+    return (patched, skipped)
+
+
+def _has_subagent_marker(content: str) -> bool:
+    """Check if content already has ltm: subagent: true in frontmatter."""
+    # Find frontmatter block
+    match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+    if not match:
+        return False
+
+    frontmatter = match.group(1)
+
+    # Check for ltm section with subagent: true
+    in_ltm_section = False
+    for line in frontmatter.split("\n"):
+        stripped = line.strip()
+
+        if stripped == "ltm:":
+            in_ltm_section = True
+            continue
+
+        if in_ltm_section:
+            # Check if we've left the ltm section (no indent)
+            if stripped and not line.startswith(" ") and not line.startswith("\t"):
+                in_ltm_section = False
+                continue
+
+            if "subagent:" in stripped:
+                value = stripped.split(":", 1)[1].strip().lower()
+                return value in ("true", "yes", "1")
+
+    return False
+
+
+def _add_subagent_marker(content: str) -> str:
+    """Add ltm: subagent: true to frontmatter after opening ---."""
+    # Simple approach: insert after the first ---\n
+    if content.startswith("---\n"):
+        return "---\nltm:\n  subagent: true\n" + content[4:]
+    elif content.startswith("---\r\n"):
+        return "---\r\nltm:\r\n  subagent: true\r\n" + content[5:]
+    return content
 
 
 def setup_hooks(project_dir: Path, force: bool = False) -> bool:
@@ -168,15 +257,17 @@ def run(args: list[str]) -> int:
     Options:
         --commands      Install slash commands only
         --hooks         Configure hooks only
+        --no-patch      Skip patching existing agents as subagents
         --force         Overwrite existing files
         --help          Show this help
 
-    If no options specified, installs both commands and hooks.
+    If no options specified, installs commands, hooks, and patches subagents.
     """
     # Parse arguments
     force = "--force" in args
     commands_only = "--commands" in args
     hooks_only = "--hooks" in args
+    no_patch = "--no-patch" in args
     show_help = "--help" in args or "-h" in args
 
     # Filter out flags to get project dir
@@ -193,6 +284,7 @@ Usage:
 Options:
     --commands      Install slash commands only
     --hooks         Configure hooks only
+    --no-patch      Skip patching existing agents as subagents
     --force         Overwrite existing files
     --help          Show this help
 
@@ -208,6 +300,15 @@ Examples:
 
     # Force overwrite existing files
     uv run python -m ltm.tools.setup --force
+
+    # Skip subagent patching (keep existing agents as primary)
+    uv run python -m ltm.tools.setup --no-patch
+
+Subagent Patching:
+    If your project has .claude/agents/*.md files, they will shadow the global
+    Anima agent by default. The setup tool automatically adds 'ltm: subagent: true'
+    to these files so they're treated as Task-invoked subagents rather than the
+    main session identity. Use --no-patch to skip this behavior.
 """)
         return 0
 
@@ -241,6 +342,21 @@ Examples:
         except Exception as e:
             print(f"  Error configuring hooks: {e}\n")
             success = False
+
+    # Patch subagents unless --no-patch or running with specific options
+    if not no_patch and not commands_only and not hooks_only:
+        agents_dir = project_dir / ".claude" / "agents"
+        if agents_dir.exists() and list(agents_dir.glob("*.md")):
+            print("Patching agent definitions...")
+            try:
+                patched, skipped = patch_subagents(project_dir)
+                if patched > 0 or skipped > 0:
+                    print(f"  Agents: {patched} patched, {skipped} skipped\n")
+                else:
+                    print("  No agent files found\n")
+            except Exception as e:
+                print(f"  Error patching agents: {e}\n")
+                success = False
 
     if success:
         print("Setup complete!")
