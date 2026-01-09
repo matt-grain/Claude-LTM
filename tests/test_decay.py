@@ -5,7 +5,7 @@
 Unit tests for LTM memory decay and compaction.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ltm.core import Agent, Memory, MemoryKind, Project, RegionType, ImpactLevel
@@ -115,6 +115,54 @@ class TestDecayThresholds:
 
         assert decay.should_compact(old_memory)
         assert not decay.should_compact(recent_memory)
+
+    def test_timezone_aware_memory_handled(self, temp_db_path: Path) -> None:
+        """Test that timezone-aware memories are handled correctly."""
+        store = MemoryStore(db_path=temp_db_path)
+        decay = MemoryDecay(store)
+
+        # Memory with timezone-aware datetime (as might be stored by some code paths)
+        tz_aware_memory = Memory(
+            agent_id="test",
+            region=RegionType.AGENT,
+            kind=MemoryKind.LEARNINGS,
+            content="Timezone aware learning",
+            impact=ImpactLevel.LOW,
+            created_at=datetime.now(timezone.utc) - timedelta(days=2)
+        )
+
+        # Should not raise TypeError when comparing with naive datetime
+        result = decay.should_compact(tz_aware_memory)
+        assert result is True  # Old enough to compact
+
+    def test_mixed_timezone_naive_memories(self, temp_db_path: Path) -> None:
+        """Test decay works with mix of naive and aware datetimes."""
+        store = MemoryStore(db_path=temp_db_path)
+        decay = MemoryDecay(store)
+
+        # Naive datetime memory
+        naive_memory = Memory(
+            agent_id="test",
+            region=RegionType.AGENT,
+            kind=MemoryKind.LEARNINGS,
+            content="Naive datetime memory",
+            impact=ImpactLevel.LOW,
+            created_at=datetime.now() - timedelta(days=2)
+        )
+
+        # Timezone-aware memory (e.g., +01:00 offset)
+        aware_memory = Memory(
+            agent_id="test",
+            region=RegionType.AGENT,
+            kind=MemoryKind.LEARNINGS,
+            content="Aware datetime memory",
+            impact=ImpactLevel.LOW,
+            created_at=datetime.now(timezone(timedelta(hours=1))) - timedelta(days=2)
+        )
+
+        # Both should work without raising errors
+        assert decay.should_compact(naive_memory) is True
+        assert decay.should_compact(aware_memory) is True
 
 
 class TestCompaction:

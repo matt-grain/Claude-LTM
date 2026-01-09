@@ -21,7 +21,7 @@ Install the latest release directly:
 cd /path/to/your-project
 
 # Install the latest release
-uv add https://github.com/matt-grain/Claude-LTM/releases/download/v0.4.0/ltm-0.4.0-py3-none-any.whl
+uv add https://github.com/matt-grain/Claude-LTM/releases/download/v0.4.1/ltm-0.4.1-py3-none-any.whl
 ```
 
 This installs the `ltm` command and all modules in your project's virtual environment.

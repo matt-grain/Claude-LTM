@@ -71,7 +71,12 @@ class MemoryDecay:
         if threshold is None:
             return False
 
-        age = now - memory.created_at
+        # Normalize both datetimes to naive for comparison
+        # (handles mixed timezone-aware and naive datetimes in database)
+        now_naive = now.replace(tzinfo=None) if now.tzinfo else now
+        created_naive = memory.created_at.replace(tzinfo=None) if memory.created_at.tzinfo else memory.created_at
+
+        age = now_naive - created_naive
         return age > threshold
 
     def compact_content(self, memory: Memory) -> str:
