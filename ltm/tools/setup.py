@@ -166,12 +166,22 @@ def _has_subagent_marker(content: str) -> bool:
 
 
 def _add_subagent_marker(content: str) -> str:
-    """Add ltm: subagent: true to frontmatter after opening ---."""
-    # Simple approach: insert after the first ---\n
+    """Add ltm: subagent: true to frontmatter before closing ---.
+
+    Inserts at the END of frontmatter to preserve `name:` as the first field,
+    which Claude Code requires for agent recognition.
+    """
+    # Find the closing --- of frontmatter
     if content.startswith("---\n"):
-        return "---\nltm:\n  subagent: true\n" + content[4:]
+        # Find the second --- (closing)
+        end_idx = content.find("\n---", 4)
+        if end_idx != -1:
+            # Insert before the closing ---
+            return content[:end_idx] + "\nltm:\n  subagent: true" + content[end_idx:]
     elif content.startswith("---\r\n"):
-        return "---\r\nltm:\r\n  subagent: true\r\n" + content[5:]
+        end_idx = content.find("\r\n---", 5)
+        if end_idx != -1:
+            return content[:end_idx] + "\r\nltm:\r\n  subagent: true" + content[end_idx:]
     return content
 
 
