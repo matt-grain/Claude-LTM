@@ -56,6 +56,64 @@ def get_package_seeds_dir() -> Path:
     raise FileNotFoundError("Could not find seeds directory in package")
 
 
+def get_package_skills_dir() -> Path:
+    """Get the skills directory from the installed package."""
+    try:
+        ltm_files = resources.files("ltm")
+        skills_dir = Path(str(ltm_files)) / "skills"
+        if skills_dir.exists():
+            return skills_dir
+    except (TypeError, AttributeError):
+        pass
+
+    # Fallback: look relative to this file (ltm/tools/setup.py -> ltm/skills)
+    package_root = Path(__file__).parent.parent
+    skills_dir = package_root / "skills"
+    if skills_dir.exists():
+        return skills_dir
+
+    raise FileNotFoundError("Could not find skills directory in package")
+
+
+def setup_skills(project_dir: Path, force: bool = False) -> tuple[int, int]:
+    """Copy skill directories to project's .claude/skills directory."""
+    try:
+        src_dir = get_package_skills_dir()
+    except FileNotFoundError as e:
+        print(f"  ⚠️  {e}")
+        return (0, 0)
+
+    dest_dir = project_dir / ".claude" / "skills"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    copied = 0
+    skipped = 0
+
+    for skill_dir in src_dir.iterdir():
+        if not skill_dir.is_dir():
+            continue
+
+        skill_md = skill_dir / "SKILL.md"
+        if not skill_md.exists():
+            continue
+
+        dest_skill_dir = dest_dir / skill_dir.name
+
+        if dest_skill_dir.exists() and not force:
+            print(f"  ⏭️  {skill_dir.name}/ (exists, use --force to overwrite)")
+            skipped += 1
+            continue
+
+        # Copy entire skill directory
+        if dest_skill_dir.exists():
+            shutil.rmtree(dest_skill_dir)
+        shutil.copytree(skill_dir, dest_skill_dir)
+        print(f"  ✅ {skill_dir.name}/")
+        copied += 1
+
+    return (copied, skipped)
+
+
 def setup_commands(project_dir: Path, force: bool = False) -> tuple[int, int]:
     """Copy command files to project's .claude/commands directory."""
     try:
@@ -352,6 +410,17 @@ Subagent Patching:
             print(f"  Commands: {copied} installed, {skipped} skipped\n")
         except Exception as e:
             print(f"  Error installing commands: {e}\n")
+            success = False
+
+        print("Installing skills...")
+        try:
+            copied, skipped = setup_skills(project_dir, force)
+            if copied > 0 or skipped > 0:
+                print(f"  Skills: {copied} installed, {skipped} skipped\n")
+            else:
+                print("  No skills found in package\n")
+        except Exception as e:
+            print(f"  Error installing skills: {e}\n")
             success = False
 
     if install_hooks:
