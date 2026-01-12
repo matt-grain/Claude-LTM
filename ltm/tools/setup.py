@@ -186,8 +186,19 @@ def _add_subagent_marker(content: str) -> str:
 
 
 def setup_hooks(project_dir: Path, force: bool = False) -> bool:
-    """Add LTM hooks to project's .claude/settings.json."""
-    settings_file = project_dir / ".claude" / "settings.json"
+    """Add LTM hooks to project's .claude/settings.json or settings.local.json.
+
+    Prefers settings.local.json if it exists (user-local, not version controlled).
+    Falls back to settings.json (team-shared, version controlled).
+    """
+    settings_local = project_dir / ".claude" / "settings.local.json"
+    settings_shared = project_dir / ".claude" / "settings.json"
+
+    # Prefer local settings if it exists, otherwise use shared
+    if settings_local.exists():
+        settings_file = settings_local
+    else:
+        settings_file = settings_shared
 
     ltm_hooks = {
         "SessionStart": [
