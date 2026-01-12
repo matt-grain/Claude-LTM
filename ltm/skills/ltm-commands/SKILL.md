@@ -49,12 +49,13 @@ uv run ltm recall "search terms" [flags]
 
 **Flags:**
 - `--full` / `-f`: Show complete memory content (default shows truncated)
-- `--limit` / `-l`: Maximum results (default: 10)
+- `--id`: Look up a specific memory by ID
 
 **Examples:**
 ```bash
 uv run ltm recall "caching"
-uv run ltm recall "user preferences" --full
+uv run ltm recall --full "user preferences"
+uv run ltm recall --id abc123
 ```
 
 ### memories [flags]
@@ -66,14 +67,16 @@ uv run ltm memories [flags]
 ```
 
 **Flags:**
-- `--kind` / `-k`: Filter by type
-- `--region` / `-r`: Filter by region
+- `--kind`: Filter by type (emotional, architectural, learnings, achievements)
+- `--region`: Filter by region (agent, project)
+- `--all`: Include superseded memories
 
 **Examples:**
 ```bash
 uv run ltm memories
 uv run ltm memories --kind achievements
 uv run ltm memories --region agent
+uv run ltm memories --all
 ```
 
 ### forget <id>
@@ -89,12 +92,44 @@ uv run ltm forget <memory-id>
 uv run ltm forget abc123
 ```
 
+## Setup & Tools
+
+### setup [flags]
+
+Set up LTM in a new project. **Note:** This runs as a Python module, not via the `ltm` CLI.
+
+```bash
+uv run python -m ltm.tools.setup [flags] [project-dir]
+```
+
+**Flags:**
+- `--commands`: Install slash commands only
+- `--hooks`: Configure hooks only
+- `--no-patch`: Skip patching existing agents as subagents
+- `--force`: Overwrite existing files
+
+**Examples:**
+```bash
+# Full setup in current directory
+uv run python -m ltm.tools.setup
+
+# Setup in a different project
+uv run python -m ltm.tools.setup /path/to/project
+
+# Force overwrite existing files
+uv run python -m ltm.tools.setup --force
+```
+
+**What it installs:**
+- Slash commands to `.claude/commands/`
+- Skills to `.claude/skills/`
+- SessionStart/Stop hooks in `.claude/settings.json`
+- Patches existing agent files to mark as subagents (so they don't shadow Anima)
+
 ### Other Commands
 
-- `uv run ltm stats` - Show memory statistics
-- `uv run ltm graph` - Visualize memory chains
-- `uv run ltm export` - Export memories to JSON
-- `uv run ltm import <file>` - Import memories from JSON
+- `uv run ltm keygen <agent>` - Add signing key to Claude agent
+- `uv run ltm import-seeds <dir>` - Import seed memories from directory
 
 ## Memory Kinds
 
