@@ -1,6 +1,6 @@
 [project]
 name = "ltm"
-version = "0.4.4"
+version = "0.4.5"
 description = "Long Term Memory for Claude - human-like persistent memory across sessions"
 readme = "README.md"
 requires-python = ">=3.13"
