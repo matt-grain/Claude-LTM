@@ -285,6 +285,19 @@ def setup_hooks(project_dir: Path, force: bool = False) -> bool:
                         "command": "uv run python -m ltm.hooks.session_start"
                     }
                 ]
+            },
+            {
+                "matcher": "clear",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "uv run python -m ltm.tools.detect_achievements --since 24"
+                    },
+                    {
+                        "type": "command",
+                        "command": "uv run python -m ltm.hooks.session_start"
+                    }
+                ]
             }
         ],
         "Stop": [
