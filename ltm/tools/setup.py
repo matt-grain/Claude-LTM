@@ -183,7 +183,7 @@ def patch_subagents(project_dir: Path) -> tuple[int, int, int]:
             disabled_path = agent_file.with_suffix(".md.disabled")
             agent_file.rename(disabled_path)
             print(f"  ⚠️  {agent_file.name} → {disabled_path.name} (missing frontmatter, disabled)")
-            print(f"      To fix: add ---\\nname: \"AgentName\"\\nltm: subagent: true\\n--- at top")
+            print("      To fix: add ---\\nname: \"AgentName\"\\nltm: subagent: true\\n--- at top")
             disabled += 1
             continue
 
