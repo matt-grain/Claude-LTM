@@ -61,30 +61,38 @@ def _add_subagent_marker(content: str) -> str:
     return content
 
 
-def auto_patch_agents(project_dir: Path) -> list[str]:
+def auto_patch_agents(project_dir: Path) -> tuple[list[str], list[str]]:
     """
     Auto-patch any agent files missing the subagent marker.
 
     This prevents new agents from shadowing Anima and breaking memory loading.
+    Also disables incompatible agents (those without YAML frontmatter) since
+    Claude Code won't recognize them and they may cause issues.
 
     Returns:
-        List of patched agent filenames
+        Tuple of (patched_agents, disabled_agents) filenames
     """
     agents_dir = project_dir / ".claude" / "agents"
 
     if not agents_dir.exists():
-        return []
+        return [], []
 
     patched = []
+    disabled = []
 
     for agent_file in agents_dir.glob("*.md"):
         try:
             content = agent_file.read_text(encoding="utf-8")
 
-            if _has_subagent_marker(content):
+            # Check if file has YAML frontmatter
+            if not content.startswith("---"):
+                # Incompatible format - disable by renaming
+                disabled_path = agent_file.with_suffix(".md.disabled")
+                agent_file.rename(disabled_path)
+                disabled.append(agent_file.name)
                 continue
 
-            if not content.startswith("---"):
+            if _has_subagent_marker(content):
                 continue
 
             new_content = _add_subagent_marker(content)
@@ -95,7 +103,7 @@ def auto_patch_agents(project_dir: Path) -> list[str]:
         except (OSError, UnicodeDecodeError):
             continue
 
-    return patched
+    return patched, disabled
 
 
 def run() -> int:
@@ -112,7 +120,7 @@ def run() -> int:
 
     # Auto-patch any agents missing the subagent marker BEFORE resolving
     # This prevents new agents from shadowing Anima
-    patched_agents = auto_patch_agents(project_dir)
+    patched_agents, disabled_agents = auto_patch_agents(project_dir)
 
     # Resolve agent and project from current directory
     resolver = AgentResolver(project_dir)
@@ -130,6 +138,20 @@ def run() -> int:
     # Get formatted memories
     memories_dsl = injector.inject(agent, project)
 
+    # Build status notes
+    status_notes = []
+    if patched_agents:
+        status_notes.append(
+            f"# LTM: Auto-patched {len(patched_agents)} agent(s) as subagents: {', '.join(patched_agents)}"
+        )
+    if disabled_agents:
+        status_notes.append(
+            f"# LTM WARNING: Disabled {len(disabled_agents)} incompatible agent(s) (missing YAML frontmatter): {', '.join(disabled_agents)}"
+        )
+        status_notes.append(
+            "# LTM: To fix, add frontmatter: ---\\nname: \"AgentName\"\\nltm: subagent: true\\n---"
+        )
+
     if memories_dsl:
         # Get stats
         stats = injector.get_stats(agent, project)
@@ -140,9 +162,9 @@ def run() -> int:
 # LTM: Loaded {stats['total']} memories ({stats['agent_memories']} agent, {stats['project_memories']} project)
 # These are your long-term memories from previous sessions. Use them to inform your responses."""
 
-        # Add note about auto-patched agents
-        if patched_agents:
-            context += f"\n# LTM: Auto-patched {len(patched_agents)} agent(s) as subagents: {', '.join(patched_agents)}"
+        # Add status notes
+        if status_notes:
+            context += "\n" + "\n".join(status_notes)
 
         # Output as JSON for Claude Code hook system
         output = {
@@ -155,8 +177,8 @@ def run() -> int:
     else:
         # No memories - still output valid JSON
         no_mem_context = "# LTM: No memories found for this agent/project yet."
-        if patched_agents:
-            no_mem_context += f"\n# LTM: Auto-patched {len(patched_agents)} agent(s) as subagents: {', '.join(patched_agents)}"
+        if status_notes:
+            no_mem_context += "\n" + "\n".join(status_notes)
 
         output = {
             "hookSpecificOutput": {

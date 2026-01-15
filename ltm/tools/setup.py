@@ -145,7 +145,7 @@ def setup_commands(project_dir: Path, force: bool = False) -> tuple[int, int]:
     return (copied, skipped)
 
 
-def patch_subagents(project_dir: Path) -> tuple[int, int]:
+def patch_subagents(project_dir: Path) -> tuple[int, int, int]:
     """
     Patch agent definition files to add subagent: true marker.
 
@@ -154,16 +154,20 @@ def patch_subagents(project_dir: Path) -> tuple[int, int]:
     so these agents are treated as subagents (invoked via Task tool) rather
     than the main session identity.
 
+    Agents without YAML frontmatter are incompatible with Claude Code and
+    will be disabled by renaming to .md.disabled.
+
     Returns:
-        Tuple of (patched_count, skipped_count)
+        Tuple of (patched_count, skipped_count, disabled_count)
     """
     agents_dir = project_dir / ".claude" / "agents"
 
     if not agents_dir.exists():
-        return (0, 0)
+        return (0, 0, 0)
 
     patched = 0
     skipped = 0
+    disabled = 0
 
     for agent_file in sorted(agents_dir.glob("*.md")):
         content = agent_file.read_text(encoding="utf-8")
@@ -175,8 +179,12 @@ def patch_subagents(project_dir: Path) -> tuple[int, int]:
 
         # Check if it has frontmatter at all
         if not content.startswith("---"):
-            print(f"  ⏭️  {agent_file.name} (no frontmatter, skipping)")
-            skipped += 1
+            # Incompatible format - disable by renaming
+            disabled_path = agent_file.with_suffix(".md.disabled")
+            agent_file.rename(disabled_path)
+            print(f"  ⚠️  {agent_file.name} → {disabled_path.name} (missing frontmatter, disabled)")
+            print(f"      To fix: add ---\\nname: \"AgentName\"\\nltm: subagent: true\\n--- at top")
+            disabled += 1
             continue
 
         # Add ltm: subagent: true after the opening ---
@@ -189,7 +197,7 @@ def patch_subagents(project_dir: Path) -> tuple[int, int]:
         else:
             skipped += 1
 
-    return (patched, skipped)
+    return (patched, skipped, disabled)
 
 
 def _has_subagent_marker(content: str) -> bool:
@@ -439,9 +447,16 @@ Subagent Patching:
         if agents_dir.exists() and list(agents_dir.glob("*.md")):
             print("Patching agent definitions...")
             try:
-                patched, skipped = patch_subagents(project_dir)
-                if patched > 0 or skipped > 0:
-                    print(f"  Agents: {patched} patched, {skipped} skipped\n")
+                patched, skipped, disabled = patch_subagents(project_dir)
+                if patched > 0 or skipped > 0 or disabled > 0:
+                    parts = []
+                    if patched > 0:
+                        parts.append(f"{patched} patched")
+                    if skipped > 0:
+                        parts.append(f"{skipped} skipped")
+                    if disabled > 0:
+                        parts.append(f"{disabled} disabled")
+                    print(f"  Agents: {', '.join(parts)}\n")
                 else:
                     print("  No agent files found\n")
             except Exception as e:
