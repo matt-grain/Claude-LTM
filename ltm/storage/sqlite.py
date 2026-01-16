@@ -123,23 +123,43 @@ class MemoryStore(MemoryStoreProtocol):
     # --- Project operations ---
 
     def save_project(self, project: Project) -> None:
-        """Save or update a project."""
+        """
+        Save or update a project.
+
+        Handles conflicts on both id AND path (both have UNIQUE constraints).
+        If a project with the same path exists but different id, we update
+        that existing project rather than failing.
+        """
         with self._connect() as conn:
-            conn.execute(
-                """
-                INSERT INTO projects (id, name, path, created_at)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    name = excluded.name,
-                    path = excluded.path
-                """,
-                (
-                    project.id,
-                    project.name,
-                    str(project.path),
-                    project.created_at or datetime.now().isoformat()
+            # Check if a project with this path already exists (with different id)
+            existing = conn.execute(
+                "SELECT id FROM projects WHERE path = ? AND id != ?",
+                (str(project.path), project.id)
+            ).fetchone()
+
+            if existing:
+                # Update the existing project (keep its original id)
+                conn.execute(
+                    "UPDATE projects SET name = ? WHERE path = ?",
+                    (project.name, str(project.path))
                 )
-            )
+            else:
+                # Normal upsert by id
+                conn.execute(
+                    """
+                    INSERT INTO projects (id, name, path, created_at)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        name = excluded.name,
+                        path = excluded.path
+                    """,
+                    (
+                        project.id,
+                        project.name,
+                        str(project.path),
+                        project.created_at or datetime.now().isoformat()
+                    )
+                )
 
     def get_project(self, project_id: str) -> Optional[Project]:
         """Get a project by ID."""

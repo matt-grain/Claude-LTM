@@ -330,3 +330,43 @@ class TestMemoryStoreEdgeCases:
         # Should only match snake_case, not snakeXcase
         assert len(memories) == 1
         assert "snake_case" in memories[0].content
+
+    def test_save_project_with_path_conflict(
+        self, memory_store: MemoryStore
+    ) -> None:
+        """Test saving a project when same path exists with different ID.
+
+        Regression test for: https://github.com/anthropics/claude-ltm/issues/X
+        This happens when import-seeds creates a project with id="ltm" and
+        path=cwd, then SessionStart tries to save with id=slugify(folder_name).
+        """
+        project_path = Path("/some/project/path")
+
+        # First project - like import-seeds would create
+        project1 = Project(
+            id="ltm",  # hardcoded id
+            name="LTM Seeds",
+            path=project_path
+        )
+        memory_store.save_project(project1)
+
+        # Verify it was saved
+        retrieved1 = memory_store.get_project("ltm")
+        assert retrieved1 is not None
+        assert retrieved1.path == project_path
+
+        # Second project - like SessionStart would create (same path, different id)
+        project2 = Project(
+            id="project-path",  # slugified folder name
+            name="Project Path",
+            path=project_path  # same path!
+        )
+
+        # This should NOT raise an IntegrityError
+        memory_store.save_project(project2)
+
+        # The original project should still exist with updated name
+        retrieved_by_path = memory_store.get_project_by_path(project_path)
+        assert retrieved_by_path is not None
+        assert retrieved_by_path.id == "ltm"  # keeps original id
+        assert retrieved_by_path.name == "Project Path"  # updated name
