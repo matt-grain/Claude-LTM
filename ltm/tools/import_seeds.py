@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from ltm.core import Memory, Agent, Project, MemoryKind, ImpactLevel, RegionType
+from ltm.core import Memory, MemoryKind, ImpactLevel, RegionType, AgentResolver
 from ltm.lifecycle.injection import ensure_token_count
 from ltm.storage import MemoryStore
 
@@ -155,13 +155,15 @@ def run(args: list[str]) -> int:
     # Initialize store
     store = MemoryStore()
 
-    # Default agent for seeds (will be overridden if agent context is provided)
-    default_agent = Agent(id="ltm-founding", name="LTM Founding Session")
-    store.save_agent(default_agent)
+    # Resolve agent and project from config (same as SessionStart)
+    resolver = AgentResolver(Path.cwd())
+    agent = resolver.resolve()
+    project = resolver.resolve_project()
 
-    # Default project
-    default_project = Project(id="ltm", name="LTM", path=Path.cwd())
-    store.save_project(default_project)
+    store.save_agent(agent)
+    store.save_project(project)
+
+    print(f"Importing seeds for agent: {agent.name} ({agent.id})")
 
     imported = 0
     skipped = 0
@@ -201,9 +203,9 @@ def run(args: list[str]) -> int:
         # Create memory
         memory = Memory(
             id=parsed["id"],  # Preserve original ID
-            agent_id=default_agent.id,
+            agent_id=agent.id,
             region=parsed["region"],
-            project_id=default_project.id
+            project_id=project.id
             if parsed["region"] == RegionType.PROJECT
             else None,
             kind=parsed["kind"],
