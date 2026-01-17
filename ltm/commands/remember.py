@@ -12,6 +12,7 @@ Supports explicit flags to override inference:
   --region agent|project  - Where to store (default: inferred)
   --kind emotional|architectural|learnings|achievements - Type (default: inferred)
   --impact low|medium|high|critical - Importance (default: inferred)
+  --project NAME  - Confirm project name (must match cwd for safety)
 """
 
 import argparse
@@ -190,6 +191,11 @@ def create_parser() -> argparse.ArgumentParser:
         choices=["low", "medium", "high", "critical"],
         help="Importance level",
     )
+    parser.add_argument(
+        "--project",
+        "-p",
+        help="Confirm project name (must match cwd project for safety)",
+    )
     return parser
 
 
@@ -206,14 +212,15 @@ def run(args: list[str]) -> int:
     if not args:
         print("Usage: uv run ltm remember <text>")
         print("       uv run ltm remember --region agent <text>")
-        print("       uv run ltm remember --kind emotional --impact critical <text>")
+        print("       uv run ltm remember --project MyProject --region project <text>")
         print(
             "\nExample: uv run ltm remember This is crucial: never use print() for logging"
         )
         print("\nFlags:")
-        print("  --region, -r  agent|project    Where to store (default: inferred)")
+        print("  --region, -r   agent|project    Where to store (default: inferred)")
         print("  --kind, -k    emotional|architectural|learnings|achievements")
-        print("  --impact, -i  low|medium|high|critical")
+        print("  --impact, -i   low|medium|high|critical")
+        print("  --project, -p  NAME  Confirm project (must match cwd for safety)")
         return 1
 
     # Parse arguments
@@ -234,6 +241,17 @@ def run(args: list[str]) -> int:
     resolver = AgentResolver()
     agent = resolver.resolve()
     project = resolver.resolve_project()
+
+    # Validate --project flag if provided (safety check)
+    if parsed.project:
+        if parsed.project != project.name:
+            print(
+                f"ERROR: --project '{parsed.project}' does not match "
+                f"current project '{project.name}' (from cwd)"
+            )
+            print("This safety check prevents saving memories to the wrong project.")
+            print(f"Either cd to the correct directory or use --project {project.name}")
+            return 1
 
     # Use explicit flags or infer from text
     if parsed.impact:

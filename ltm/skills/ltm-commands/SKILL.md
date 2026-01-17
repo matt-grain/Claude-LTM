@@ -21,6 +21,7 @@ uv run ltm remember "Your memory text here" [flags]
 - `--kind` / `-k`: Memory type (emotional, architectural, learnings, achievements)
 - `--impact` / `-i`: Importance level (low, medium, high, critical)
 - `--region` / `-r`: Scope (agent = cross-project, project = this project only)
+- `--project` / `-p`: Confirm project name (safety check - must match cwd)
 
 **Examples:**
 ```bash
@@ -32,10 +33,14 @@ uv run ltm remember "Implemented caching layer" --kind achievements --impact hig
 
 # Cross-project memory (travels with Anima)
 uv run ltm remember "Matt likes concise responses" --region agent
+
+# Project-specific with safety check (prevents saving to wrong project)
+uv run ltm remember --project MyProject --region project "Project-specific learning"
 ```
 
 **Tips:**
 - Use `--region agent` for relationship/preference memories that should persist across all projects
+- Use `--project ProjectName` when saving project-scoped memories to prevent accidentally saving to wrong project
 - CRITICAL impact memories never decay
 - Memories auto-link to related previous memories
 

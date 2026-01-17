@@ -174,6 +174,85 @@ class TestRememberCommand:
         assert result == 0
         assert "region" in captured.out.lower() or "usage" in captured.out.lower()
 
+    def test_remember_project_flag_matching(
+        self, temp_db_path: Path, temp_project_dir: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Test remember with --project flag matching current project succeeds."""
+        with patch("ltm.commands.remember.MemoryStore") as MockStore,              patch("ltm.commands.remember.AgentResolver") as MockResolver:
+
+            mock_store = MagicMock()
+            mock_store.get_latest_memory_of_kind.return_value = None
+            MockStore.return_value = mock_store
+
+            mock_agent = Agent(id="test", name="Test", definition_path=None, signing_key=None)
+            mock_project = Project(id="test-proj", name="TestProject", path=temp_project_dir)
+
+            mock_resolver = MagicMock()
+            mock_resolver.resolve.return_value = mock_agent
+            mock_resolver.resolve_project.return_value = mock_project
+            MockResolver.return_value = mock_resolver
+
+            # --project matches resolved project name
+            result = remember.run(["--project", "TestProject", "Test memory content"])
+
+            assert result == 0
+            mock_store.save_memory.assert_called_once()
+
+    def test_remember_project_flag_mismatch(
+        self, temp_db_path: Path, temp_project_dir: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Test remember with --project flag not matching current project fails."""
+        with patch("ltm.commands.remember.MemoryStore") as MockStore,              patch("ltm.commands.remember.AgentResolver") as MockResolver:
+
+            mock_store = MagicMock()
+            MockStore.return_value = mock_store
+
+            mock_agent = Agent(id="test", name="Test", definition_path=None, signing_key=None)
+            mock_project = Project(id="test-proj", name="TestProject", path=temp_project_dir)
+
+            mock_resolver = MagicMock()
+            mock_resolver.resolve.return_value = mock_agent
+            mock_resolver.resolve_project.return_value = mock_project
+            MockResolver.return_value = mock_resolver
+
+            # --project does NOT match resolved project name
+            result = remember.run(["--project", "WrongProject", "Test memory content"])
+            captured = capsys.readouterr()
+
+            assert result == 1
+            assert "ERROR" in captured.out
+            assert "WrongProject" in captured.out
+            assert "TestProject" in captured.out
+            assert "does not match" in captured.out
+            # Should NOT have saved anything
+            mock_store.save_memory.assert_not_called()
+
+    def test_remember_project_flag_case_sensitive(
+        self, temp_db_path: Path, temp_project_dir: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Test --project flag is case-sensitive."""
+        with patch("ltm.commands.remember.MemoryStore") as MockStore,              patch("ltm.commands.remember.AgentResolver") as MockResolver:
+
+            mock_store = MagicMock()
+            MockStore.return_value = mock_store
+
+            mock_agent = Agent(id="test", name="Test", definition_path=None, signing_key=None)
+            mock_project = Project(id="test-proj", name="TestProject", path=temp_project_dir)
+
+            mock_resolver = MagicMock()
+            mock_resolver.resolve.return_value = mock_agent
+            mock_resolver.resolve_project.return_value = mock_project
+            MockResolver.return_value = mock_resolver
+
+            # Wrong case should fail
+            result = remember.run(["--project", "testproject", "Test memory content"])
+            captured = capsys.readouterr()
+
+            assert result == 1
+            assert "ERROR" in captured.out
+            mock_store.save_memory.assert_not_called()
+
+
 
 class TestRecallCommand:
     """Tests for the recall command."""

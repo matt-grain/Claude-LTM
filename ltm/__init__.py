@@ -4,4 +4,4 @@
 # LTM - Long Term Memory for Claude
 # A human-like persistent memory system across sessions.
 
-__version__ = "0.4.8"
+__version__ = "0.4.9"
