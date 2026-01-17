@@ -27,6 +27,7 @@ class InjectionStats(TypedDict):
     project_memories: int
     total: int
     budget_tokens: int
+    priority_counts: dict[str, int]  # CRITICAL, HIGH, MEDIUM, LOW
 
 
 # Default values (can be overridden via ~/.ltm/config.json)
@@ -241,24 +242,30 @@ class MemoryInjector:
 
     def get_stats(self, agent: Agent, project: Optional[Project] = None) -> InjectionStats:
         """Get statistics about memories for this agent/project."""
-        agent_count = len(self.store.get_memories_for_agent(
+        agent_memories = self.store.get_memories_for_agent(
             agent_id=agent.id,
             region=RegionType.AGENT,
             include_superseded=False
-        ))
+        )
 
-        project_count = 0
+        project_memories: list[Memory] = []
         if project:
-            project_count = len(self.store.get_memories_for_agent(
+            project_memories = self.store.get_memories_for_agent(
                 agent_id=agent.id,
                 region=RegionType.PROJECT,
                 project_id=project.id,
                 include_superseded=False
-            ))
+            )
+
+        # Count by priority
+        priority_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+        for memory in agent_memories + project_memories:
+            priority_counts[memory.impact.value] += 1
 
         return {
-            "agent_memories": agent_count,
-            "project_memories": project_count,
-            "total": agent_count + project_count,
-            "budget_tokens": self.budget
+            "agent_memories": len(agent_memories),
+            "project_memories": len(project_memories),
+            "total": len(agent_memories) + len(project_memories),
+            "budget_tokens": self.budget,
+            "priority_counts": priority_counts
         }

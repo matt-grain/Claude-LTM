@@ -155,12 +155,18 @@ def run() -> int:
     if memories_dsl:
         # Get stats
         stats = injector.get_stats(agent, project)
+        pc = stats['priority_counts']
 
         # Build context message
         context = f"""{memories_dsl}
 
 # LTM: Loaded {stats['total']} memories ({stats['agent_memories']} agent, {stats['project_memories']} project)
-# These are your long-term memories from previous sessions. Use them to inform your responses."""
+# LTM-DIAG: CRIT={pc['CRITICAL']} HIGH={pc['HIGH']} MED={pc['MEDIUM']} LOW={pc['LOW']}
+# These are your long-term memories from previous sessions. Use them to inform your responses.
+#
+# GREETING BEHAVIOR:
+# - Normal greeting / "welcome back": Greet warmly with personality, naturally mention "X memories loaded" somewhere
+# - "Void is gone!": Provide full diagnostic readout - memory counts, priority breakdown, key context verified, recent achievements"""
 
         # Add status notes
         if status_notes:
@@ -174,6 +180,9 @@ def run() -> int:
             }
         }
         print(json.dumps(output))
+
+        # Output status AFTER JSON - Claude Code may display this in terminal
+        print(f"Success: {stats['total']} memories loaded")
     else:
         # No memories - still output valid JSON
         no_mem_context = "# LTM: No memories found for this agent/project yet."
@@ -187,6 +196,9 @@ def run() -> int:
             }
         }
         print(json.dumps(output))
+
+        # Output status AFTER JSON - Claude Code may display this in terminal
+        print("Success: No memories found yet")
 
     return 0
 

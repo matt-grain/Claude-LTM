@@ -97,9 +97,8 @@ class TestSessionEndHook:
             captured = capsys.readouterr()
 
             assert result == 0
-            assert "Compacted 1 memories" in captured.out
-            assert "deleted 2" in captured.out
-            assert "LEARNINGS" in captured.out
+            assert "1 memories compacted" in captured.out
+            assert "2 deleted" in captured.out
 
     def test_session_end_no_compaction_needed(
         self, temp_project_dir: Path, capsys: pytest.CaptureFixture[str]
@@ -132,4 +131,4 @@ class TestSessionEndHook:
             captured = capsys.readouterr()
 
             assert result == 0
-            assert "No memories needed compaction" in captured.out
+            assert "0 memories compacted after Stop" in captured.out

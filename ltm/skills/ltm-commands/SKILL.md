@@ -9,13 +9,13 @@ Use `uv run ltm <command>` to manage long-term memories.
 
 ## Commands
 
-### remember <text> [flags]
+### remember "text" [flags]
 
 Save a memory to long-term storage.
 
-```bash
-uv run ltm remember "Your memory text here" [flags]
-```
+**Syntax:** `uv run ltm remember "TEXT" [FLAGS]`
+
+**IMPORTANT:** Always put the quoted text FIRST, then flags after.
 
 **Flags:**
 - `--kind` / `-k`: Memory type (emotional, architectural, learnings, achievements)
@@ -28,29 +28,32 @@ uv run ltm remember "Your memory text here" [flags]
 # Simple memory (auto-infers kind/impact)
 uv run ltm remember "User prefers tabs over spaces"
 
-# Explicit flags
+# With explicit flags (text FIRST, then flags)
 uv run ltm remember "Implemented caching layer" --kind achievements --impact high
 
 # Cross-project memory (travels with Anima)
 uv run ltm remember "Matt likes concise responses" --region agent
 
-# Project-specific with safety check (prevents saving to wrong project)
-uv run ltm remember --project MyProject --region project "Project-specific learning"
+# Project-specific with safety check
+uv run ltm remember "Project-specific learning" --region project --project MyProject
+
+# Text with special characters - always use double quotes
+uv run ltm remember "Fixed bug: user's input wasn't validated" --kind learnings
 ```
 
 **Tips:**
-- Use `--region agent` for relationship/preference memories that should persist across all projects
-- Use `--project ProjectName` when saving project-scoped memories to prevent accidentally saving to wrong project
+- Always use double quotes around the memory text
+- Put the quoted text FIRST, flags AFTER (never flags before text)
+- Use `--region agent` for memories that should persist across all projects
+- Use `--project` to confirm you're saving to the right project
 - CRITICAL impact memories never decay
 - Memories auto-link to related previous memories
 
-### recall <query> [flags]
+### recall "query" [flags]
 
 Search memories by content.
 
-```bash
-uv run ltm recall "search terms" [flags]
-```
+**Syntax:** `uv run ltm recall "QUERY" [FLAGS]`
 
 **Flags:**
 - `--full` / `-f`: Show complete memory content (default shows truncated)
@@ -59,7 +62,7 @@ uv run ltm recall "search terms" [flags]
 **Examples:**
 ```bash
 uv run ltm recall "caching"
-uv run ltm recall --full "user preferences"
+uv run ltm recall "user preferences" --full
 uv run ltm recall --id abc123
 ```
 

@@ -37,7 +37,8 @@ class TestSessionStartHook:
                 "total": 3,
                 "agent_memories": 2,
                 "project_memories": 1,
-                "budget_tokens": 10000
+                "budget_tokens": 10000,
+                "priority_counts": {"CRITICAL": 1, "HIGH": 1, "MEDIUM": 1, "LOW": 0}
             }
             MockInjector.return_value = mock_injector
 
@@ -56,13 +57,19 @@ class TestSessionStartHook:
 
             assert result == 0
 
-            # Parse output as JSON
-            output = json.loads(captured.out)
+            # Parse output - first line is JSON, second line is status message
+            lines = captured.out.strip().split("\n")
+            output = json.loads(lines[0])
             assert "hookSpecificOutput" in output
             assert output["hookSpecificOutput"]["hookEventName"] == "SessionStart"
             assert "additionalContext" in output["hookSpecificOutput"]
             assert "@Matt" in output["hookSpecificOutput"]["additionalContext"]
             assert "Loaded 3 memories" in output["hookSpecificOutput"]["additionalContext"]
+            assert "LTM-DIAG:" in output["hookSpecificOutput"]["additionalContext"]
+
+            # Check status message
+            assert len(lines) >= 2
+            assert "Success: 3 memories loaded" in lines[1]
 
     def test_session_start_no_memories(
         self, temp_project_dir: Path, capsys: pytest.CaptureFixture[str]
@@ -95,9 +102,14 @@ class TestSessionStartHook:
 
             assert result == 0
 
-            # Parse output as JSON
-            output = json.loads(captured.out)
+            # Parse output - first line is JSON, second line is status message
+            lines = captured.out.strip().split("\n")
+            output = json.loads(lines[0])
             assert "No memories found" in output["hookSpecificOutput"]["additionalContext"]
+
+            # Check status message
+            assert len(lines) >= 2
+            assert "Success: No memories found yet" in lines[1]
 
     def test_session_start_json_format(
         self, temp_project_dir: Path, capsys: pytest.CaptureFixture[str]
@@ -117,7 +129,8 @@ class TestSessionStartHook:
                 "total": 1,
                 "agent_memories": 1,
                 "project_memories": 0,
-                "budget_tokens": 10000
+                "budget_tokens": 10000,
+                "priority_counts": {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 0, "LOW": 0}
             }
             MockInjector.return_value = mock_injector
 
@@ -134,8 +147,9 @@ class TestSessionStartHook:
             session_start.run()
             captured = capsys.readouterr()
 
-            # Verify it's valid JSON
-            output = json.loads(captured.out)
+            # Parse output - first line is JSON, second line is status message
+            lines = captured.out.strip().split("\n")
+            output = json.loads(lines[0])
 
             # Verify structure matches Claude Code hook format
             assert "hookSpecificOutput" in output
@@ -143,6 +157,12 @@ class TestSessionStartHook:
             assert "hookEventName" in hook_output
             assert "additionalContext" in hook_output
             assert hook_output["hookEventName"] == "SessionStart"
+            # Verify greeting instructions are present
+            assert "GREETING BEHAVIOR" in hook_output["additionalContext"]
+
+            # Check status message is present
+            assert len(lines) >= 2
+            assert "Success:" in lines[1]
 
     def test_session_start_saves_agent_and_project(
         self, temp_project_dir: Path

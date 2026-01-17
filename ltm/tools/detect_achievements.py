@@ -241,12 +241,12 @@ def run(args: list[str]) -> int:
 
         achievements_found += 1
 
-    # Summary
+    # Summary (to stdout for terminal visibility)
     print()
     if dry_run:
         print(f"Dry run: {achievements_found} achievements would be saved, {skipped} skipped")
     else:
-        print(f"Done: {achievements_found} achievements saved, {skipped} skipped")
+        print(f"{achievements_found} achievements saved, {skipped} skipped after detect-achievements")
 
     return 0
 

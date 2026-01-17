@@ -43,13 +43,11 @@ def run() -> int:
     # Clean up empty memories
     deleted = decay.delete_empty_memories(agent.id)
 
-    # Report what happened
+    # Report what happened (to stdout for terminal visibility)
     if compacted or deleted:
-        print(f"# LTM Session End: Compacted {len(compacted)} memories, deleted {deleted}")
-        for memory, new_content in compacted:
-            print(f"#   - {memory.kind.value}: {new_content[:50]}...")
+        print(f"{len(compacted)} memories compacted, {deleted} deleted after Stop")
     else:
-        print("# LTM Session End: No memories needed compaction")
+        print("0 memories compacted after Stop")
 
     return 0
 
